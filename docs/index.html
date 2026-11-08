@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="クリックゲーム">
+	<title>ルミナスクリッカー</title>
+    <link rel="stylesheet" href="CSS/style.css">
+</head>
+<body>
+    <main class="game">
+        <h1>ルミナスクリッカー</h1>
+        <div class="stats" aria-live="polite">
+            <div id="energy">Energy:0</div>
+            <div id="Production">AUTO: +1 / 10秒</div>
+        </div>
+        <button id="core" type="button">CORE</button>
+        <div class="atom" aria-hidden="true">
+            <div class="orbit orbit-1"><span class="electron"></span></div>
+            <div class="orbit orbit-2"><span class="electron"></span></div>
+            <div class="orbit orbit-3"><span class="electron"></span></div>
+        </div>
+        <section class="upgrades" aria-labelledby="upgrades-title">
+            <h2 id="upgrades-title">アップグレード</h2>
+            <div class="upgrade-tabs" role="tablist" aria-label="アップグレードの種類">
+                <button class="upgrade-tab" id="click-tab" type="button" role="tab" aria-selected="true" aria-controls="click-upgrades" tabindex="0">クリック</button>
+                <button class="upgrade-tab" id="auto-tab" type="button" role="tab" aria-selected="false" aria-controls="auto-upgrades" tabindex="-1">オート</button>
+            </div>
+            <section class="upgrade-panel" id="click-upgrades" role="tabpanel" aria-labelledby="click-tab">
+                <div class="upgrade-grid">
+                    <button class="upgrade-card" data-upgrade="0" type="button">
+                        <span class="upgrade-name">CP +1</span>
+                        <span class="upgrade-effect">クリック獲得量 +1</span>
+                        <span class="upgrade-details"><span id="count0">購入: 0</span><span id="price0">10 Energy</span></span>
+                    </button>
+                    <button class="upgrade-card" data-upgrade="1" type="button">
+                        <span class="upgrade-name">CUP: 効果倍率 +1</span>
+                        <span class="upgrade-effect">クリック力の倍率 +1</span>
+                        <span class="upgrade-details"><span id="count1">購入: 0</span><span id="price1">100 Energy</span></span>
+                    </button>
+                    <button class="upgrade-card" data-upgrade="2" type="button">
+                        <span class="upgrade-name">CUP: 指数強化</span>
+                        <span class="upgrade-effect" id="effect2">指数: 1.000 / 次回 +0.01</span>
+                        <span class="upgrade-details"><span id="count2">購入: 0</span><span id="price2">1,000 Energy</span></span>
+                    </button>
+                </div>
+            </section>
+            <section class="upgrade-panel" id="auto-upgrades" role="tabpanel" aria-labelledby="auto-tab" hidden>
+                <div class="upgrade-grid">
+                    <button class="upgrade-card" data-upgrade="3" type="button">
+                        <span class="upgrade-name">OUP: 自動獲得 +1</span>
+                        <span class="upgrade-effect">自動獲得量 +1</span>
+                        <span class="upgrade-details"><span id="count3">購入: 0</span><span id="price3">100 Energy</span></span>
+                    </button>
+                    <button class="upgrade-card" data-upgrade="4" type="button">
+                        <span class="upgrade-name">OUP: 間隔短縮</span>
+                        <span class="upgrade-effect">自動獲得の間隔を短縮 (最大100回)</span>
+                        <span class="upgrade-details"><span id="count4">購入: 0 / 100</span><span id="price4">1,000 Energy</span></span>
+                    </button>
+                    <button class="upgrade-card" data-upgrade="5" type="button">
+                        <span class="upgrade-name">OUP: 効果倍率 +1</span>
+                        <span class="upgrade-effect">自動獲得力の倍率 +1</span>
+                        <span class="upgrade-details"><span id="count5">購入: 0</span><span id="price5">1,000 Energy</span></span>
+                    </button>
+                    <button class="upgrade-card" data-upgrade="6" type="button">
+                        <span class="upgrade-name">OUP: 指数強化</span>
+                        <span class="upgrade-effect" id="effect6">指数: 1.000 / 次回 +0.01</span>
+                        <span class="upgrade-details"><span id="count6">購入: 0</span><span id="price6">1,000 Energy</span></span>
+                    </button>
+                </div>
+            </section>
+        </section>
+        <section class="prestige" aria-labelledby="prestige-title">
+            <h2 id="prestige-title">転生</h2>
+            <div class="prestige-status" aria-live="polite">
+                <span id="prestige-points">転生ポイント: 0</span>
+                <span id="energy-cap">Energy上限: 1.00e+10</span>
+                <span id="prestige-reward">転生獲得: 0 pt</span>
+            </div>
+            <button id="prestige-button" type="button" hidden>転生する</button>
+            <p id="auto-buy-status" class="auto-buy-status"></p>
+            <h3>スキルツリー</h3>
+            <div class="skill-tree-scroll" tabindex="0" aria-label="スキルツリー。横方向にスクロールできます">
+                <div class="skill-tree" id="skill-tree">
+                    <svg class="skill-tree-lines" id="skill-tree-lines" viewBox="0 0 820 900" aria-hidden="true"></svg>
+                    <div class="skill-tree-nodes" id="skill-tree-nodes"></div>
+                </div>
+            </div>
+            <section id="challenge-section" class="challenges" aria-labelledby="challenges-title" hidden>
+                <h3 id="challenges-title">チャレンジ</h3>
+                <p id="challenge-status" aria-live="polite">チャレンジを選択してください</p>
+                <div id="challenge-list" class="challenge-grid"></div>
+            </section>
+        </section>
+        <section class="achievements" aria-labelledby="achievements-title">
+            <h2 id="achievements-title">実績</h2>
+            <p id="achievement-progress" aria-live="polite">解除済み: 0 / 0</p>
+            <div class="achievement-grid" id="achievement-list"></div>
+        </section>
+    </main>
+        <script src="JS/main.js"></script>
+        <script src="JS/prestige.js"></script>
+        <script src="JS/achievements.js"></script>
+</body>
+</html>
