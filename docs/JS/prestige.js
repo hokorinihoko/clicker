@@ -35,11 +35,11 @@ const challengeDefinitions=[
 	{id:3,valueExponent:0.1,description:"すべての獲得量を x^0.1 にする"},
 	{id:4,exponentUpgradesDisabled:true,description:"指数アップグレード禁止"},
 	{id:5,valueExponent:0.01,description:"すべての獲得量を x^0.01 にする"},
-	{id:6,priceExponent:10,description:"すべてのアップグレード価格を x^10 にする"},
-	{id:7,valueExponent:0.1,priceExponent:5,description:"獲得量 x^0.1 ・アップグレード価格 x^5"},
-	{id:8,valueExponent:0.01,priceExponent:10,description:"獲得量 x^0.01 ・アップグレード価格 x^10"},
+	{id:6,priceExponent:2,description:"すべてのアップグレード価格を x^2 にする"},
+	{id:7,valueExponent:0.1,priceExponent:3,description:"獲得量 x^0.1 ・アップグレード価格 x^3"},
+	{id:8,valueExponent:0.01,priceExponent:2,description:"獲得量 x^0.01 ・アップグレード価格 x^2"},
 	{id:9,valueExponent:0.01,exponentUpgradesDisabled:true,description:"指数アップグレード禁止 ・獲得量 x^0.01"},
-	{id:10,valueExponent:0.01,priceExponent:10,exponentUpgradesDisabled:true,description:"指数アップグレード禁止 ・アップグレード価格 x^10 ・獲得量 x^0.01"}
+	{id:10,valueExponent:0.01,priceExponent:3,exponentUpgradesDisabled:true,description:"指数アップグレード禁止 ・アップグレード価格 x^3 ・獲得量 x^0.01"}
 ].map(challenge=>({
 	...challenge,
 	name:"チャレンジ "+challenge.id,
