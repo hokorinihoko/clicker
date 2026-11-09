@@ -2,7 +2,7 @@ let energy=0;
 let clickBase=1;
 let clickMultiplier=1;
 let clickExponent=1;
-let autoBase=0;
+let autoBase=1;
 let autoMultiplier=1;
 let autoExponent=1;
 let autoInterval=10000;
@@ -11,14 +11,14 @@ const core=document.getElementById("core");
 const energyDisplay=document.getElementById("energy");
 const productionDisplay=document.getElementById("Production");
 const exponentSoftCap=100;
-const exponentGain=0.01;
-const exponentGainAfterCap=0.005;
+const exponentGain=0.005;
+const exponentGainAfterCap=0.001;
 const upgrades=[
     {cost:10,count:0,apply:()=>clickBase++},
     {cost:100,count:0,apply:()=>clickMultiplier++},
     {cost:1000,count:0,apply:()=>clickExponent+=(upgrades[2].count<exponentSoftCap?exponentGain:exponentGainAfterCap)},
     {cost:100,count:0,apply:()=>autoBase++},
-    {cost:1000,count:0,apply:()=>autoInterval=Math.max(100,autoInterval-Math.floor(autoInterval/(upgrades[4].count+1))),limit:100},
+    {cost:1000,count:0,apply:()=>autoInterval=Math.max(100,autoInterval-Math.floor(autoInterval/(upgrades[4].count*10))),limit:10},
     {cost:1000,count:0,apply:()=>autoMultiplier++},
     {cost:1000,count:0,apply:()=>autoExponent+=(upgrades[6].count<exponentSoftCap?exponentGain:exponentGainAfterCap)}
 ];
@@ -86,7 +86,7 @@ function updateDisplays(){
         if(index===2||index===6){
             const currentExponent=index===2?clickExponent:autoExponent;
             const nextGain=upgrade.count<exponentSoftCap-1?exponentGain:exponentGainAfterCap;
-            document.getElementById("effect"+index).textContent="指数: "+currentExponent.toFixed(3)+" / 次回 +"+(nextGain===exponentGain?"0.01":"0.005");
+            document.getElementById("effect"+index).textContent="指数: "+currentExponent.toFixed(3)+" / 次回 +"+(nextGain===exponentGain?"0.005":"0.001");
         }
         card.disabled=isUpgradeBlocked(index)||energy<getUpgradePrice(upgrade)||(upgrade.limit!==undefined&&upgrade.count>=upgrade.limit);
     });
@@ -226,7 +226,7 @@ window.Game={
         clickBase=1;
         clickMultiplier=1;
         clickExponent=1;
-        autoBase=0;
+        autoBase=1;
         autoMultiplier=1;
         autoExponent=1;
         autoInterval=10000;

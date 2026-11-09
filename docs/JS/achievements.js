@@ -38,17 +38,17 @@ const achievementDefinitions=[
     {id:"energy-13",name:"2度目の天井",description:"累計で1e12Energy獲得する",goal:1e12,progress:()=>achievementStats.energyEarned},
     {id:"energy-14",name:"T達成",description:"累計で1e13Energy獲得する",goal:1e13,progress:()=>achievementStats.energyEarned},
 
-    {id:"auto-1",name:"オート開発",description:"オートを1にする",goal:1,progress:()=>achievementStats.auto},
-    {id:"auto-2",name:"手作業のほうが早い",description:"オートを10にする",goal:10,progress:()=>achievementStats.auto},
-    {id:"auto-3",name:"簡易的放置",description:"オートを100にする",goal:100,progress:()=>achievementStats.auto},
-    {id:"auto-4",name:"オートのパワー",description:"オートを1,000にする",goal:1000,progress:()=>achievementStats.auto},
-    {id:"auto-5",name:"インフレ中",description:"オートを10,000にする",goal:10000,progress:()=>achievementStats.auto},
-    {id:"auto-6",name:"工場",description:"オートを100,000にする",goal:100000,progress:()=>achievementStats.auto},
-    {id:"auto-7",name:"指数オート",description:"オートを1e6にする",goal:1e6,progress:()=>achievementStats.auto},
-    {id:"auto-8",name:"手作業の負け",description:"オートを1e7にする",goal:1e7,progress:()=>achievementStats.auto},
-    {id:"auto-9",name:"作業は放置へ",description:"オートを1e8にする",goal:1e8,progress:()=>achievementStats.auto},
-    {id:"auto-10",name:"自主的休暇",description:"オートを1e9にする",goal:1e9,progress:()=>achievementStats.auto},
-    {id:"auto-11",name:"瞬間転生",description:"オートを1e10にする",goal:1e10,progress:()=>achievementStats.auto},
+    {id:"auto-1",name:"オート開発",description:"オートを1にする",goal:1,progress:()=>window.Game.autoPower},
+    {id:"auto-2",name:"手作業のほうが早い",description:"オートを10にする",goal:10,progress:()=>window.Game.autoPower},
+    {id:"auto-3",name:"簡易的放置",description:"オートを100にする",goal:100,progress:()=>window.Game.autoPower},
+    {id:"auto-4",name:"オートのパワー",description:"オートを1,000にする",goal:1000,progress:()=>window.Game.autoPower},
+    {id:"auto-5",name:"インフレ中",description:"オートを10,000にする",goal:10000,progress:()=>window.Game.autoPower},
+    {id:"auto-6",name:"工場",description:"オートを100,000にする",goal:100000,progress:()=>window.Game.autoPower},
+    {id:"auto-7",name:"指数オート",description:"オートを1e6にする",goal:1e6,progress:()=>window.Game.autoPower},
+    {id:"auto-8",name:"手作業の負け",description:"オートを1e7にする",goal:1e7,progress:()=>window.Game.autoPower},
+    {id:"auto-9",name:"作業は放置へ",description:"オートを1e8にする",goal:1e8,progress:()=>window.Game.autoPower},
+    {id:"auto-10",name:"自主的休暇",description:"オートを1e9にする",goal:1e9,progress:()=>window.Game.autoPower},
+    {id:"auto-11",name:"瞬間転生",description:"オートを1e10にする",goal:1e10,progress:()=>window.Game.autoPower},
 
     {id:"first-upgrade",name:"強化開始",description:"アップグレードを購入する",goal:1,progress:()=>achievementStats.upgradesBought},
     {id:"upgrade-50",name:"積み重ね",description:"アップグレードを累計50回購入する",goal:50,progress:()=>achievementStats.upgradesBought},
@@ -60,12 +60,12 @@ const achievementDefinitions=[
     {id:"challenge-10",name:"完全制覇",description:"全10チャレンジをクリアする",goal:10,progress:()=>achievementStats.challengesCleared},
 
     {id:"first-skill",name:"知識の解放",description:"スキルを1つ取得する",goal:1,progress:()=>achievementStats.skillsBought},
-    {id:"root-skill-10",name:"根を伸ばす",description:"スキル1を10回取得する",goal:10,progress:()=>window.Prestige.getSkillLevel("1")},
+    {id:"root-skill-10",name:"根を伸ばす",description:"スキル0を10回取得する",goal:10,progress:()=>window.Prestige.getSkillLevel("0")},
 
     {id:"cap-1e12",name:"限界突破",description:"Energy上限を1e12にする",goal:1e12,progress:()=>window.Prestige.getEnergyCap()},
     {id:"cap-1e15",name:"星系の果て",description:"Energy上限を1e15にする",goal:1e15,progress:()=>window.Prestige.getEnergyCap()},
 
-    {id:"auto-buy",name:"自動化",description:"スキル2.3を取得する",goal:1,progress:()=>window.Prestige.getSkillLevel("2.3")},
+    {id:"auto-buy",name:"自動化",description:"スキル3.1を取得する",goal:1,progress:()=>window.Prestige.getSkillLevel("3.1")},
 
     {id:"Enter",name:"Enter長押し",description:"cps15を超える",goal:15,progress:()=>achievementStats.a},
     {id:"クリックやめます。",name:"",description:"クリックせずに転生する",goal:0,progress:()=>achievementStats.a}

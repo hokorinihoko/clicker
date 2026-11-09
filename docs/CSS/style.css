@@ -8,7 +8,35 @@ body{
 .game{
     width:min(920px, calc(100% - 32px));
     margin:0 auto;
-    padding:24px 0 48px;
+    padding:72px 0 48px;
+}
+.view-toggle{
+    position:fixed;
+    z-index:5;
+    top:16px;
+    right:16px;
+    padding:10px 16px;
+    border:1px solid #ffc96b;
+    border-radius:5px;
+    background:#563e22;
+    color:#ffe2a8;
+    font:inherit;
+    font-weight:700;
+    cursor:pointer;
+}
+.view-toggle:hover{
+    background:#704e27;
+}
+.view-toggle:focus-visible{
+    outline:2px solid #69eaff;
+    outline-offset:3px;
+}
+.view-toggle[hidden],
+.game[hidden]{
+    display:none;
+}
+.prestige-view .prestige{
+    margin-top:0;
 }
 .stats{
     display:flex;
@@ -260,7 +288,7 @@ body{
 .skill-tree{
     position:relative;
     width:820px;
-    height:900px;
+    height:1400px;
     margin:0 auto;
 }
 .skill-tree-lines,

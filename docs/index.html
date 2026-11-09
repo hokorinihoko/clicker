@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="CSS/style.css">
 </head>
 <body>
-    <main class="game">
+    <button id="view-toggle" class="view-toggle" type="button" aria-controls="game-view prestige-view" aria-expanded="false" hidden>転生画面</button>
+    <main id="game-view" class="game">
         <h1>ルミナスクリッカー</h1>
         <div class="stats" aria-live="polite">
             <div id="energy">Energy:0</div>
@@ -54,8 +55,8 @@
                     </button>
                     <button class="upgrade-card" data-upgrade="4" type="button">
                         <span class="upgrade-name">OUP: 間隔短縮</span>
-                        <span class="upgrade-effect">自動獲得の間隔を短縮 (最大100回)</span>
-                        <span class="upgrade-details"><span id="count4">購入: 0 / 100</span><span id="price4">1,000 Energy</span></span>
+                        <span class="upgrade-effect">自動獲得の間隔を短縮 (最大10回)</span>
+                        <span class="upgrade-details"><span id="count4">購入: 0 / 10</span><span id="price4">1,000 Energy</span></span>
                     </button>
                     <button class="upgrade-card" data-upgrade="5" type="button">
                         <span class="upgrade-name">OUP: 効果倍率 +1</span>
@@ -70,6 +71,13 @@
                 </div>
             </section>
         </section>
+        <section class="achievements" aria-labelledby="achievements-title">
+            <h2 id="achievements-title">実績</h2>
+            <p id="achievement-progress" aria-live="polite">解除済み: 0 / 0</p>
+            <div class="achievement-grid" id="achievement-list"></div>
+        </section>
+    </main>
+    <main id="prestige-view" class="game prestige-view" hidden>
         <section class="prestige" aria-labelledby="prestige-title">
             <h2 id="prestige-title">転生</h2>
             <div class="prestige-status" aria-live="polite">
@@ -82,7 +90,7 @@
             <h3>スキルツリー</h3>
             <div class="skill-tree-scroll" tabindex="0" aria-label="スキルツリー。横方向にスクロールできます">
                 <div class="skill-tree" id="skill-tree">
-                    <svg class="skill-tree-lines" id="skill-tree-lines" viewBox="0 0 820 900" aria-hidden="true"></svg>
+                    <svg class="skill-tree-lines" id="skill-tree-lines" viewBox="0 0 820 1400" aria-hidden="true"></svg>
                     <div class="skill-tree-nodes" id="skill-tree-nodes"></div>
                 </div>
             </div>
@@ -91,11 +99,6 @@
                 <p id="challenge-status" aria-live="polite">チャレンジを選択してください</p>
                 <div id="challenge-list" class="challenge-grid"></div>
             </section>
-        </section>
-        <section class="achievements" aria-labelledby="achievements-title">
-            <h2 id="achievements-title">実績</h2>
-            <p id="achievement-progress" aria-live="polite">解除済み: 0 / 0</p>
-            <div class="achievement-grid" id="achievement-list"></div>
         </section>
     </main>
         <script src="JS/main.js"></script>

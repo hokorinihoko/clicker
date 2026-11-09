@@ -1,21 +1,29 @@
 let prestigePoints=0;
 let prestigeCount=0;
+let prestigeUnlocked=false;
 
 const prestigeSaveKey="luminousClickerPrestigeSave";
+const prestigeEnergyRequirement=1e10;
+const viewToggle=document.getElementById("view-toggle");
 const skillDefinitions=[
-	{id:"1",name:"1",description:"全獲得量の指数 +0.1",cost:1,maxLevel:100,x:410,y:440},
-	{id:"2.1",name:"2.1",description:"全獲得量 +1倍",cost:1,requires:"1",x:410,y:215},
-	{id:"2.2",name:"2.2",description:"転生ポイント獲得数 +1",cost:2,requires:"1",x:605,y:327},
-	{id:"2.3",name:"2.3",description:"最安アップグレードを自動購入",cost:5,requires:"1",x:605,y:552},
-	{id:"2.4",name:"2.4",description:"Energy上限を 1e12 に拡張",cost:10,requires:"1",x:410,y:665},
-	{id:"2.5",name:"2.5",description:"転生後、CPを+10購入済みで開始",cost:10,requires:"1",x:215,y:552},
-	{id:"2.6",name:"2.6",description:"チャレンジ解放",cost:50,requires:"1",x:215,y:327},
-	{id:"3.1",name:"3.1",description:"全獲得量 +1倍",cost:2,requires:"2.1",x:337,y:89},
-	{id:"3.2",name:"3.2",description:"全獲得量 +3倍",cost:5,requires:"2.1",x:483,y:89},
-	{id:"3.3",name:"3.3",description:"転生ポイント獲得数 +1",cost:3,requires:"2.2",x:744,y:247},
-	{id:"3.4",name:"3.4",description:"Energy上限を 1e15 に拡張",cost:50,requires:"2.4",x:410,y:810},
-	{id:"3.5",name:"3.5",description:"転生後、CPをさらに+10購入済み",cost:10,requires:"2.5",x:143,y:678},
-	{id:"3.6",name:"3.6",description:"転生後、クリック倍率を+10購入済み",cost:15,requires:"2.5",x:70,y:552}
+	{id:"0",name:"0",description:"全獲得量の指数 +0.01",cost:1,maxLevel:100,x:410,y:440},
+	{id:"1.1",name:"1.1",description:"全獲得量 +1倍",cost:1,requires:"0",x:410,y:215},
+	{id:"2.1",name:"2.1",description:"転生ポイント獲得数 +1",cost:2,requires:"0",x:605,y:327},
+	{id:"3.1",name:"3.1",description:"最安アップグレードを自動購入",cost:5,requires:"0",x:605,y:552},
+	{id:"4.1",name:"4.1",description:"Energy上限を 1e11 に拡張",cost:10,requires:"0",x:410,y:665},
+	{id:"5.1",name:"5.1",description:"転生後、CPを+10購入済みで開始",cost:10,requires:"0",x:215,y:552},
+	{id:"6.1",name:"6.1",description:"チャレンジ解放",cost:50,requires:"0",x:215,y:327},
+	{id:"1.2",name:"1.2",description:"全獲得量 +1倍",cost:2,requires:"1.1",x:337,y:89},
+	{id:"1.3",name:"1.3",description:"全獲得量 +3倍",cost:5,requires:"1.1",x:483,y:89},
+	{id:"1.4",name:"1.4",description:"全獲得量 +3倍",cost:10,requires:"1.2,1.3",x:410,y:-37},
+	{id:"2.2",name:"2.2",description:"転生ポイント獲得数 +1",cost:3,requires:"2.1",x:744,y:247},
+	{id:"4.2",name:"4.2",description:"Energy上限を 1e12 に拡張",cost:50,requires:"4.1",x:410,y:810},
+	{id:"4.3",name:"4.3",description:"Energy上限を 1e13 に拡張",cost:1000,requires:"4.2",x:410,y:955},
+	{id:"4.4",name:"4.4",description:"Energy上限を 1e14 に拡張",cost:50000,requires:"4.3",x:410,y:1100},
+	{id:"4.5",name:"4.5",description:"Energy上限を 1e15 に拡張",cost:100000,requires:"4.4",x:410,y:1245},
+	{id:"5.2",name:"5.2",description:"転生後、CPをさらに+10購入済み",cost:10,requires:"5.1",x:143,y:678},
+	{id:"5.3",name:"5.3",description:"転生後、クリック倍率を+10購入済み",cost:15,requires:"5.1",x:70,y:552},
+	{id:"6.2",name:"6.2",description:"チャレンジ1つクリアにつき+^0.1",cost:500,requires:"6.1",x:76,y:247}
 ];
 skillDefinitions.forEach(skill=>{
 	if(skill.maxLevel===undefined){
@@ -25,8 +33,12 @@ skillDefinitions.forEach(skill=>{
 
 const skillLevels=Object.fromEntries(skillDefinitions.map(skill=>[skill.id,0]));
 const skillEdges=[
-	["1","2.1"],["1","2.2"],["1","2.3"],["1","2.4"],["1","2.5"],["1","2.6"],
-	["2.1","3.1"],["2.1","3.2"],["2.2","3.3"],["2.4","3.4"],["2.5","3.5"],["2.5","3.6"]
+	["0","1.1"],["0","2.1"],["0","3.1"],["0","4.1"],["0","5.1"],["0","6.1"],
+	["1.1","1.2"],["1.1","1.3"],["1.2","1.4"],["1.3","1.4"],
+	["2.1","2.2"],
+	["4.1","4.2"],["4.2","4.3"],["4.3","4.4"],["4.4","4.5"],
+	["5.1","5.2"],["5.1","5.3"],
+	["6.1","6.2"]
 ];
 const skillButtons=new Map();
 const challengeDefinitions=[
@@ -53,35 +65,44 @@ let clearedChallenges=new Set();
 function getSkillLevel(skillId){
 	const level=skillLevels[skillId];
 	return Number.isInteger(level)&&level>=0?level:0;
-}
+};
 
 function getEnergyCap(){
-	if(getSkillLevel("3.4")>0){
+	if(getSkillLevel("4.5")>0){
 		return 1e15;
-	}
-	if(getSkillLevel("2.4")>0){
+	};
+	if(getSkillLevel("4.4")>0){
+		return 1e14;
+	};
+	if(getSkillLevel("4.3")>0){
+		return 1e13;
+	};
+	if(getSkillLevel("4.2")>0){
 		return 1e12;
-	}
+	};
+	if(getSkillLevel("4.1")>0){
+		return 1e11;
+	};
 	return 1e10;
-}
+};
 
 function getGlobalExponent(){
-	return 1+getSkillLevel("1")*0.1;
+	return 1+getSkillLevel("0")*0.01;
 }
 
 function getGlobalMultiplier(){
 	return 1+
-		Number(getSkillLevel("2.1")>0)+
-		Number(getSkillLevel("3.1")>0)+
-		(getSkillLevel("3.2")>0?3:0);
+		Number(getSkillLevel("1.1")>0)+
+		Number(getSkillLevel("1.2")>0)+
+		(getSkillLevel("1.3")>0?3:0);
 }
 
 function getPrestigePointMultiplier(){
-	return 1+Number(getSkillLevel("2.2")>0)+Number(getSkillLevel("3.3")>0);
+	return 1+Number(getSkillLevel("2.1")>0)+Number(getSkillLevel("2.2")>0);
 }
 
 function skillCost(skill){
-	return skill.id==="1"?2**getSkillLevel(skill.id):skill.cost;
+	return skill.id==="0"?2**getSkillLevel(skill.id):skill.cost;
 }
 
 function createSkillTree(){
@@ -184,7 +205,7 @@ function isChallengeUnlocked(challengeId){
 
 function updateChallengeDisplays(){
 	const section=document.getElementById("challenge-section");
-	section.hidden=getSkillLevel("2.6")===0;
+	section.hidden=getSkillLevel("6.1")===0;
 	if(section.hidden){
 		return;
 	}
@@ -192,7 +213,7 @@ function updateChallengeDisplays(){
 	const status=document.getElementById("challenge-status");
 	if(activeChallenge!==null){
 		const active=challengeDefinitions.find(challenge=>challenge.id===activeChallenge);
-		status.textContent=active.name+"に挑戦中。デバフを維持したまま転生するとクリアです。";
+		status.textContent=active.name+"に挑戦中。同じカードをもう一度押すと中断できます。デバフ中に転生するとクリアです。";
 	}else{
 		const nextChallenge=challengeDefinitions.find(challenge=>!clearedChallenges.has(challenge.id));
 		status.textContent=nextChallenge
@@ -208,9 +229,9 @@ function updateChallengeDisplays(){
 		button.classList.toggle("is-cleared",cleared&&!active);
 		button.classList.toggle("is-active",active);
 		button.classList.toggle("is-locked",!unlocked);
-		button.disabled=activeChallenge!==null||!unlocked;
+		button.disabled=activeChallenge!==null? !active:!unlocked;
 		state.textContent=active
-			? "挑戦中"
+			? "挑戦中・クリックで中断"
 			: cleared
 				? "クリア済み・再挑戦可能"
 				: unlocked
@@ -223,15 +244,19 @@ function updatePrestigeDisplays(){
 	const game=window.Game;
 	const energyCap=getEnergyCap();
 	game.energy=Math.min(game.energy,energyCap);
+	if(game.energy>=1e10||prestigeCount>0){
+		prestigeUnlocked=true;
+	}
+	viewToggle.hidden=!prestigeUnlocked;
 	document.getElementById("prestige-points").textContent="転生ポイント: "+window.Game.formatNumber(prestigePoints)+" (転生 "+window.Game.formatNumber(prestigeCount)+"回)";
 	document.getElementById("energy-cap").textContent="Energy上限: "+window.Game.formatNumber(energyCap);
 
-	const reward=Math.floor(game.energy/1e10)*getPrestigePointMultiplier();
+	const reward=Math.floor(game.energy/prestigeEnergyRequirement)*getPrestigePointMultiplier();
 	const button=document.getElementById("prestige-button");
-	button.hidden=game.energy<energyCap;
+	button.hidden=game.energy<prestigeEnergyRequirement;
 	button.textContent="転生する ("+window.Game.formatNumber(reward)+" pt)";
 	document.getElementById("prestige-reward").textContent="転生獲得: "+window.Game.formatNumber(reward)+" pt";
-	document.getElementById("auto-buy-status").textContent=getSkillLevel("2.3")>0
+	document.getElementById("auto-buy-status").textContent=getSkillLevel("3.1")>0
 		? "自動購入: 有効 (購入可能な最安アップグレードから購入)"
 		: "自動購入: 未解放";
 	updateSkillTree();
@@ -241,6 +266,7 @@ function updatePrestigeDisplays(){
 function savePrestigeGame(){
 	const game=window.Game;
 	const save={
+		gameStateVersion:2,
 		energy:game.energy,
 		clickBase:game.clickBase,
 		clickMultiplier:game.clickMultiplier,
@@ -251,6 +277,8 @@ function savePrestigeGame(){
 		autoInterval:game.autoInterval,
 		prestigePoints,
 		prestigeCount,
+		prestigeUnlocked,
+		skillIdVersion:2,
 		activeChallenge,
 		clearedChallenges:Array.from(clearedChallenges),
 		skillLevels:Object.fromEntries(skillDefinitions.map(skill=>[skill.id,getSkillLevel(skill.id)])),
@@ -278,10 +306,30 @@ function loadPrestigeGame(){
 				}
 			}
 		}
+		prestigeUnlocked=save.prestigeUnlocked===true||prestigeCount>0;
 
 		if(save.skillLevels&&typeof save.skillLevels==="object"){
+			const legacySkillIds={
+				"1":"0",
+				"2.1":"1.1",
+				"2.2":"2.1",
+				"2.3":"3.1",
+				"2.4":"4.1",
+				"2.5":"5.1",
+				"2.6":"6.1",
+				"3.1":"1.2",
+				"3.2":"1.3",
+				"3.3":"2.2",
+				"3.4":"4.2",
+				"3.5":"5.2",
+				"3.6":"5.3"
+			};
+			const isCurrentSkillSchema=save.skillIdVersion>=2||Object.prototype.hasOwnProperty.call(save.skillLevels,"0");
 			for(const skill of skillDefinitions){
-				const level=save.skillLevels[skill.id];
+				const sourceId=isCurrentSkillSchema
+					? skill.id
+					: Object.keys(legacySkillIds).find(oldId=>legacySkillIds[oldId]===skill.id);
+				const level=save.skillLevels[sourceId||skill.id];
 				skillLevels[skill.id]=Number.isInteger(level)&&level>=0
 					? Math.min(level,skill.maxLevel)
 					: 0;
@@ -290,14 +338,17 @@ function loadPrestigeGame(){
 		if(Array.isArray(save.clearedChallenges)){
 			clearedChallenges=new Set(save.clearedChallenges.filter(id=>Number.isInteger(id)&&id>=1&&id<=challengeDefinitions.length));
 		}
-		if(Number.isInteger(save.activeChallenge)&&save.activeChallenge>=1&&save.activeChallenge<=challengeDefinitions.length&&getSkillLevel("2.6")>0){
+		if(Number.isInteger(save.activeChallenge)&&save.activeChallenge>=1&&save.activeChallenge<=challengeDefinitions.length&&getSkillLevel("6.1")>0){
 			activeChallenge=save.activeChallenge;
 		}
 
-		for(const key of ["clickBase","clickMultiplier","clickExponent","autoBase","autoMultiplier","autoExponent","autoInterval"]){
+		for(const key of ["clickBase","clickMultiplier","clickExponent","autoMultiplier","autoExponent","autoInterval"]){
 			if(Number.isFinite(save[key])&&save[key]>=0){
 				window.Game[key]=save[key];
 			}
+		}
+		if(Number.isFinite(save.autoBase)&&save.autoBase>=0){
+			window.Game.autoBase=save.gameStateVersion>=2?save.autoBase:save.autoBase+1;
 		}
 		if(Array.isArray(save.upgrades)){
 			window.Game.upgrades.forEach((upgrade,index)=>{
@@ -341,7 +392,7 @@ function purchaseSkill(skill){
 	}
 	prestigePoints-=cost;
 	skillLevels[skill.id]=getSkillLevel(skill.id)+1;
-	if(skill.id==="2.3"){
+	if(skill.id==="3.1"){
 		buyCheapestAvailableUpgrade();
 	}
 	updatePrestigeDisplays();
@@ -352,7 +403,16 @@ function purchaseSkill(skill){
 }
 
 function startChallenge(challengeId){
-	if(getSkillLevel("2.6")===0||activeChallenge!==null||!Number.isInteger(challengeId)||!isChallengeUnlocked(challengeId)){
+	if(getSkillLevel("6.1")===0||!Number.isInteger(challengeId)){
+		return;
+	}
+	if(activeChallenge===challengeId){
+		activeChallenge=null;
+		window.Game.updateDisplays();
+		savePrestigeGame();
+		return;
+	}
+	if(activeChallenge!==null||!isChallengeUnlocked(challengeId)){
 		return;
 	}
 	activeChallenge=challengeId;
@@ -363,12 +423,16 @@ function startChallenge(challengeId){
 
 function prestige(){
 	const game=window.Game;
-	const energyCap=getEnergyCap();
-	if(game.energy<energyCap){
+	if(game.energy<prestigeEnergyRequirement){
 		return;
 	}
-	const pointsEarned=Math.floor(game.energy/1e10)*getPrestigePointMultiplier();
+	const pointsEarned=Math.floor(game.energy/prestigeEnergyRequirement)*getPrestigePointMultiplier();
 	if(pointsEarned<=0){
+		return;
+	}
+	const challengeNotice=activeChallenge!==null?"\n現在のチャレンジもクリアになります。":"";
+	const confirmation="転生しますか？\nEnergyとアップグレードの進行はリセットされます。\n転生ポイントを "+window.Game.formatNumber(pointsEarned)+" pt獲得します。"+challengeNotice;
+	if(!window.confirm(confirmation)){
 		return;
 	}
 	const completedChallenge=activeChallenge;
@@ -380,11 +444,11 @@ function prestige(){
 		activeChallenge=null;
 	}
 	game.resetRun();
-	const freeClickBuys=10*Number(getSkillLevel("2.5")>0)+10*Number(getSkillLevel("3.5")>0);
+	const freeClickBuys=10*Number(getSkillLevel("5.1")>0)+10*Number(getSkillLevel("5.2")>0);
 	for(let index=0;index<freeClickBuys;index++){
 		game.buyUpgrade(0,true);
 	}
-	if(getSkillLevel("3.6")>0){
+	if(getSkillLevel("5.3")>0){
 		for(let index=0;index<10;index++){
 			game.buyUpgrade(1,true);
 		}
@@ -425,13 +489,22 @@ window.Prestige={
 	updateDisplays:updatePrestigeDisplays,
 	saveGame:savePrestigeGame,
 	tryAutoBuy(){
-		if(getSkillLevel("2.3")>0){
+		if(getSkillLevel("3.1")>0){
 			buyCheapestAvailableUpgrade();
 		}
 	}
 };
 
 document.getElementById("prestige-button").addEventListener("click",prestige);
+viewToggle.addEventListener("click",()=>{
+	const gameView=document.getElementById("game-view");
+	const prestigeView=document.getElementById("prestige-view");
+	const showingPrestige=!prestigeView.hidden;
+	gameView.hidden=!showingPrestige;
+	prestigeView.hidden=showingPrestige;
+	viewToggle.textContent=showingPrestige?"転生画面":"ゲームに戻る";
+	viewToggle.setAttribute("aria-expanded",String(!showingPrestige));
+});
 window.addEventListener("beforeunload",savePrestigeGame);
 loadPrestigeGame();
 createSkillTree();
