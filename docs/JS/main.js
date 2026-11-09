@@ -22,6 +22,7 @@ const upgrades=[
     {cost:1000,count:0,apply:()=>autoMultiplier++},
     {cost:1000,count:0,apply:()=>autoExponent+=(upgrades[6].count<exponentSoftCap?exponentGain:exponentGainAfterCap)}
 ];
+const autoBuyEnabled=upgrades.map(()=>true);
 const upgradeTabs=Array.from(document.querySelectorAll(".upgrade-tab"));
 
 function activateUpgradeTab(tab){
@@ -89,6 +90,11 @@ function updateDisplays(){
             document.getElementById("effect"+index).textContent="指数: "+currentExponent.toFixed(3)+" / 次回 +"+(nextGain===exponentGain?"0.005":"0.001");
         }
         card.disabled=isUpgradeBlocked(index)||energy<getUpgradePrice(upgrade)||(upgrade.limit!==undefined&&upgrade.count>=upgrade.limit);
+        const autoBuyToggle=document.querySelector('[data-auto-buy="'+index+'"]');
+        if(autoBuyToggle){
+            autoBuyToggle.checked=window.Game.getAutoBuyEnabled(index);
+            autoBuyToggle.disabled=!window.Prestige||window.Prestige.getSkillLevel("3.1")===0;
+        }
     });
     if(window.Prestige){
         window.Prestige.updateDisplays();
@@ -183,6 +189,14 @@ document.querySelectorAll(".upgrade-card").forEach(card=>{
     });
 });
 
+document.querySelectorAll("[data-auto-buy]").forEach(toggle=>{
+    toggle.addEventListener("change",()=>{
+        window.Game.setAutoBuyEnabled(Number(toggle.dataset.autoBuy),toggle.checked);
+        updateDisplays();
+        saveGame();
+    });
+});
+
 core.addEventListener("click",function(){
     if(window.Achievements){
         window.Achievements.recordClick();
@@ -211,6 +225,13 @@ window.Game={
     get autoInterval(){return autoInterval;},
     set autoInterval(value){autoInterval=value;},
     get upgrades(){return upgrades;},
+    get autoBuyEnabled(){return autoBuyEnabled.slice();},
+    getAutoBuyEnabled(index){return autoBuyEnabled[index]===true;},
+    setAutoBuyEnabled(index,enabled){
+        if(Number.isInteger(index)&&index>=0&&index<autoBuyEnabled.length){
+            autoBuyEnabled[index]=Boolean(enabled);
+        }
+    },
     get baseUpgradeCosts(){return [10,100,1000,100,1000,1000,1000];},
     getUpgradePrice,
     isUpgradeBlocked,

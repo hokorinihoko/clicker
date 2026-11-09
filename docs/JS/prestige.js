@@ -5,6 +5,9 @@ let prestigeUnlocked=false;
 const prestigeSaveKey="luminousClickerPrestigeSave";
 const prestigeEnergyRequirement=1e10;
 const viewToggle=document.getElementById("view-toggle");
+const prestigeView=document.getElementById("prestige-view");
+let prestigeWindowPosition=null;
+const skillTreeOffsetY=120;
 const skillDefinitions=[
 	{id:"0",name:"0",description:"全獲得量の指数 +0.01",cost:1,maxLevel:100,x:410,y:440},
 	{id:"1.1",name:"1.1",description:"全獲得量 +1倍",cost:1,requires:"0",x:410,y:215},
@@ -94,7 +97,8 @@ function getGlobalMultiplier(){
 	return 1+
 		Number(getSkillLevel("1.1")>0)+
 		Number(getSkillLevel("1.2")>0)+
-		(getSkillLevel("1.3")>0?3:0);
+		(getSkillLevel("1.3")>0?3:0)+
+		(getSkillLevel("1.4")>0?3:0);
 }
 
 function getPrestigePointMultiplier(){
@@ -112,9 +116,9 @@ function createSkillTree(){
 		const child=skillDefinitions.find(skill=>skill.id===childId);
 		const line=document.createElementNS("http://www.w3.org/2000/svg","line");
 		line.setAttribute("x1",parent.x);
-		line.setAttribute("y1",parent.y);
+		line.setAttribute("y1",parent.y+skillTreeOffsetY);
 		line.setAttribute("x2",child.x);
-		line.setAttribute("y2",child.y);
+		line.setAttribute("y2",child.y+skillTreeOffsetY);
 		line.dataset.child=childId;
 		svg.appendChild(line);
 	}
@@ -125,7 +129,7 @@ function createSkillTree(){
 		button.className="skill-node";
 		button.type="button";
 		button.style.left=skill.x+"px";
-		button.style.top=skill.y+"px";
+		button.style.top=(skill.y+skillTreeOffsetY)+"px";
 
 		const name=document.createElement("span");
 		name.className="skill-node-name";
@@ -144,7 +148,23 @@ function createSkillTree(){
 }
 
 function isSkillAvailable(skill){
-	return !skill.requires||getSkillLevel(skill.requires)>0;
+	return !skill.requires||skill.requires.split(",").every(skillId=>getSkillLevel(skillId.trim())>0);
+}
+
+function clampPrestigeWindowPosition(){
+	const rect=prestigeView.getBoundingClientRect();
+	const position=prestigeWindowPosition||{left:rect.left,top:rect.top};
+	const left=Math.min(Math.max(position.left,8),Math.max(8,window.innerWidth-rect.width-8));
+	const top=Math.min(Math.max(position.top,8),Math.max(8,window.innerHeight-rect.height-8));
+	prestigeView.style.left=left+"px";
+	prestigeView.style.top=top+"px";
+	prestigeView.style.transform="none";
+	prestigeWindowPosition={left,top};
+}
+
+function movePrestigeWindow(left,top){
+	prestigeWindowPosition={left,top};
+	clampPrestigeWindowPosition();
 }
 
 function updateSkillTree(){
@@ -256,9 +276,12 @@ function updatePrestigeDisplays(){
 	button.hidden=game.energy<prestigeEnergyRequirement;
 	button.textContent="転生する ("+window.Game.formatNumber(reward)+" pt)";
 	document.getElementById("prestige-reward").textContent="転生獲得: "+window.Game.formatNumber(reward)+" pt";
-	document.getElementById("auto-buy-status").textContent=getSkillLevel("3.1")>0
-		? "自動購入: 有効 (購入可能な最安アップグレードから購入)"
-		: "自動購入: 未解放";
+	const autoBuyEnabledCount=window.Game.autoBuyEnabled.filter(Boolean).length;
+	document.getElementById("auto-buy-status").textContent=getSkillLevel("3.1")===0
+		? "自動購入: 未解放"
+		: autoBuyEnabledCount===0
+			? "自動購入: 対象なし"
+			: "自動購入: 有効 ("+autoBuyEnabledCount+" / "+window.Game.upgrades.length+"種類を対象)";
 	updateSkillTree();
 	updateChallengeDisplays();
 }
@@ -278,6 +301,8 @@ function savePrestigeGame(){
 		prestigePoints,
 		prestigeCount,
 		prestigeUnlocked,
+		prestigeWindowPosition,
+		autoBuyEnabled:game.autoBuyEnabled,
 		skillIdVersion:2,
 		activeChallenge,
 		clearedChallenges:Array.from(clearedChallenges),
@@ -307,6 +332,12 @@ function loadPrestigeGame(){
 			}
 		}
 		prestigeUnlocked=save.prestigeUnlocked===true||prestigeCount>0;
+		if(save.prestigeWindowPosition&&Number.isFinite(save.prestigeWindowPosition.left)&&Number.isFinite(save.prestigeWindowPosition.top)){
+			prestigeWindowPosition={left:save.prestigeWindowPosition.left,top:save.prestigeWindowPosition.top};
+		}
+		if(Array.isArray(save.autoBuyEnabled)){
+			save.autoBuyEnabled.forEach((enabled,index)=>window.Game.setAutoBuyEnabled(index,enabled));
+		}
 
 		if(save.skillLevels&&typeof save.skillLevels==="object"){
 			const legacySkillIds={
@@ -372,7 +403,7 @@ function buyCheapestAvailableUpgrade(){
 	while(game.energy<getEnergyCap()){
 		const next=game.upgrades
 			.map((upgrade,index)=>({upgrade,index}))
-			.filter(item=>!game.isUpgradeBlocked(item.index)&&game.energy>=game.getUpgradePrice(item.upgrade)&&(
+			.filter(item=>game.getAutoBuyEnabled(item.index)&&!game.isUpgradeBlocked(item.index)&&game.energy>=game.getUpgradePrice(item.upgrade)&&(
 				item.upgrade.limit===undefined||item.upgrade.count<item.upgrade.limit
 			))
 			.sort((left,right)=>game.getUpgradePrice(left.upgrade)-game.getUpgradePrice(right.upgrade)||left.index-right.index)[0];
@@ -495,15 +526,61 @@ window.Prestige={
 	}
 };
 
+const prestigeDragHandle=document.getElementById("prestige-title");
+let prestigeDragOffset=null;
+prestigeDragHandle.addEventListener("pointerdown",event=>{
+	if(event.button!==0){
+		return;
+	}
+	const rect=prestigeView.getBoundingClientRect();
+	prestigeView.style.left=rect.left+"px";
+	prestigeView.style.top=rect.top+"px";
+	prestigeView.style.transform="none";
+	prestigeDragOffset={x:event.clientX-rect.left,y:event.clientY-rect.top};
+	prestigeDragHandle.setPointerCapture(event.pointerId);
+});
+prestigeDragHandle.addEventListener("pointermove",event=>{
+	if(!prestigeDragOffset||!prestigeDragHandle.hasPointerCapture(event.pointerId)){
+		return;
+	}
+	movePrestigeWindow(event.clientX-prestigeDragOffset.x,event.clientY-prestigeDragOffset.y);
+});
+prestigeDragHandle.addEventListener("pointerup",event=>{
+	if(!prestigeDragHandle.hasPointerCapture(event.pointerId)){
+		return;
+	}
+	prestigeDragHandle.releasePointerCapture(event.pointerId);
+	prestigeDragOffset=null;
+	savePrestigeGame();
+});
+prestigeDragHandle.addEventListener("keydown",event=>{
+	const rect=prestigeView.getBoundingClientRect();
+	const step=event.shiftKey?32:12;
+	const moves={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]};
+	const move=moves[event.key];
+	if(!move){
+		return;
+	}
+	event.preventDefault();
+	movePrestigeWindow(rect.left+move[0],rect.top+move[1]);
+	savePrestigeGame();
+});
+window.addEventListener("resize",()=>{
+	if(!prestigeView.hidden){
+		clampPrestigeWindowPosition();
+	}
+});
+
 document.getElementById("prestige-button").addEventListener("click",prestige);
 viewToggle.addEventListener("click",()=>{
-	const gameView=document.getElementById("game-view");
-	const prestigeView=document.getElementById("prestige-view");
 	const showingPrestige=!prestigeView.hidden;
-	gameView.hidden=!showingPrestige;
 	prestigeView.hidden=showingPrestige;
 	viewToggle.textContent=showingPrestige?"転生画面":"ゲームに戻る";
 	viewToggle.setAttribute("aria-expanded",String(!showingPrestige));
+	if(!showingPrestige){
+		clampPrestigeWindowPosition();
+		savePrestigeGame();
+	}
 });
 window.addEventListener("beforeunload",savePrestigeGame);
 loadPrestigeGame();

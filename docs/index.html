@@ -29,45 +29,66 @@
             </div>
             <section class="upgrade-panel" id="click-upgrades" role="tabpanel" aria-labelledby="click-tab">
                 <div class="upgrade-grid">
-                    <button class="upgrade-card" data-upgrade="0" type="button">
-                        <span class="upgrade-name">CP +1</span>
-                        <span class="upgrade-effect">クリック獲得量 +1</span>
-                        <span class="upgrade-details"><span id="count0">購入: 0</span><span id="price0">10 Energy</span></span>
-                    </button>
-                    <button class="upgrade-card" data-upgrade="1" type="button">
-                        <span class="upgrade-name">CUP: 効果倍率 +1</span>
-                        <span class="upgrade-effect">クリック力の倍率 +1</span>
-                        <span class="upgrade-details"><span id="count1">購入: 0</span><span id="price1">100 Energy</span></span>
-                    </button>
-                    <button class="upgrade-card" data-upgrade="2" type="button">
-                        <span class="upgrade-name">CUP: 指数強化</span>
-                        <span class="upgrade-effect" id="effect2">指数: 1.000 / 次回 +0.01</span>
-                        <span class="upgrade-details"><span id="count2">購入: 0</span><span id="price2">1,000 Energy</span></span>
-                    </button>
+                    <div class="upgrade-item">
+                        <button class="upgrade-card" data-upgrade="0" type="button">
+                            <span class="upgrade-name">CP +1</span>
+                            <span class="upgrade-effect">クリック獲得量 +1</span>
+                            <span class="upgrade-details"><span id="count0">購入: 0</span><span id="price0">10 Energy</span></span>
+                        </button>
+                        <label class="upgrade-auto-toggle"><input type="checkbox" data-auto-buy="0" checked>自動購入</label>
+                    </div>
+                    <div class="upgrade-item">
+                        <button class="upgrade-card" data-upgrade="1" type="button">
+                            <span class="upgrade-name">CUP: 効果倍率 +1</span>
+                            <span class="upgrade-effect">クリック力の倍率 +1</span>
+                            <span class="upgrade-details"><span id="count1">購入: 0</span><span id="price1">100 Energy</span></span>
+                        </button>
+                        <label class="upgrade-auto-toggle"><input type="checkbox" data-auto-buy="1" checked>自動購入</label>
+                    </div>
+                    <div class="upgrade-item">
+                        <button class="upgrade-card" data-upgrade="2" type="button">
+                            <span class="upgrade-name">CUP: 指数強化</span>
+                            <span class="upgrade-effect" id="effect2">指数: 1.000 / 次回 +0.01</span>
+                            <span class="upgrade-details"><span id="count2">購入: 0</span><span id="price2">1,000 Energy</span></span>
+                        </button>
+                        <label class="upgrade-auto-toggle"><input type="checkbox" data-auto-buy="2" checked>自動購入</label>
+                    </div>
                 </div>
             </section>
             <section class="upgrade-panel" id="auto-upgrades" role="tabpanel" aria-labelledby="auto-tab" hidden>
                 <div class="upgrade-grid">
-                    <button class="upgrade-card" data-upgrade="3" type="button">
-                        <span class="upgrade-name">OUP: 自動獲得 +1</span>
-                        <span class="upgrade-effect">自動獲得量 +1</span>
-                        <span class="upgrade-details"><span id="count3">購入: 0</span><span id="price3">100 Energy</span></span>
-                    </button>
-                    <button class="upgrade-card" data-upgrade="4" type="button">
-                        <span class="upgrade-name">OUP: 間隔短縮</span>
-                        <span class="upgrade-effect">自動獲得の間隔を短縮 (最大10回)</span>
-                        <span class="upgrade-details"><span id="count4">購入: 0 / 10</span><span id="price4">1,000 Energy</span></span>
-                    </button>
-                    <button class="upgrade-card" data-upgrade="5" type="button">
-                        <span class="upgrade-name">OUP: 効果倍率 +1</span>
-                        <span class="upgrade-effect">自動獲得力の倍率 +1</span>
-                        <span class="upgrade-details"><span id="count5">購入: 0</span><span id="price5">1,000 Energy</span></span>
-                    </button>
-                    <button class="upgrade-card" data-upgrade="6" type="button">
-                        <span class="upgrade-name">OUP: 指数強化</span>
-                        <span class="upgrade-effect" id="effect6">指数: 1.000 / 次回 +0.01</span>
-                        <span class="upgrade-details"><span id="count6">購入: 0</span><span id="price6">1,000 Energy</span></span>
-                    </button>
+                    <div class="upgrade-item">
+                        <button class="upgrade-card" data-upgrade="3" type="button">
+                            <span class="upgrade-name">OUP: 自動獲得 +1</span>
+                            <span class="upgrade-effect">自動獲得量 +1</span>
+                            <span class="upgrade-details"><span id="count3">購入: 0</span><span id="price3">100 Energy</span></span>
+                        </button>
+                        <label class="upgrade-auto-toggle"><input type="checkbox" data-auto-buy="3" checked>自動購入</label>
+                    </div>
+                    <div class="upgrade-item">
+                        <button class="upgrade-card" data-upgrade="4" type="button">
+                            <span class="upgrade-name">OUP: 間隔短縮</span>
+                            <span class="upgrade-effect">自動獲得の間隔を短縮 (最大10回)</span>
+                            <span class="upgrade-details"><span id="count4">購入: 0 / 10</span><span id="price4">1,000 Energy</span></span>
+                        </button>
+                        <label class="upgrade-auto-toggle"><input type="checkbox" data-auto-buy="4" checked>自動購入</label>
+                    </div>
+                    <div class="upgrade-item">
+                        <button class="upgrade-card" data-upgrade="5" type="button">
+                            <span class="upgrade-name">OUP: 効果倍率 +1</span>
+                            <span class="upgrade-effect">自動獲得力の倍率 +1</span>
+                            <span class="upgrade-details"><span id="count5">購入: 0</span><span id="price5">1,000 Energy</span></span>
+                        </button>
+                        <label class="upgrade-auto-toggle"><input type="checkbox" data-auto-buy="5" checked>自動購入</label>
+                    </div>
+                    <div class="upgrade-item">
+                        <button class="upgrade-card" data-upgrade="6" type="button">
+                            <span class="upgrade-name">OUP: 指数強化</span>
+                            <span class="upgrade-effect" id="effect6">指数: 1.000 / 次回 +0.01</span>
+                            <span class="upgrade-details"><span id="count6">購入: 0</span><span id="price6">1,000 Energy</span></span>
+                        </button>
+                        <label class="upgrade-auto-toggle"><input type="checkbox" data-auto-buy="6" checked>自動購入</label>
+                    </div>
                 </div>
             </section>
         </section>
@@ -79,7 +100,7 @@
     </main>
     <main id="prestige-view" class="game prestige-view" hidden>
         <section class="prestige" aria-labelledby="prestige-title">
-            <h2 id="prestige-title">転生</h2>
+            <h2 id="prestige-title" class="prestige-drag-handle" tabindex="0" aria-label="転生ウィンドウ。ドラッグまたは矢印キーで移動">転生</h2>
             <div class="prestige-status" aria-live="polite">
                 <span id="prestige-points">転生ポイント: 0</span>
                 <span id="energy-cap">Energy上限: 1.00e+10</span>
@@ -90,7 +111,7 @@
             <h3>スキルツリー</h3>
             <div class="skill-tree-scroll" tabindex="0" aria-label="スキルツリー。横方向にスクロールできます">
                 <div class="skill-tree" id="skill-tree">
-                    <svg class="skill-tree-lines" id="skill-tree-lines" viewBox="0 0 820 1400" aria-hidden="true"></svg>
+                    <svg class="skill-tree-lines" id="skill-tree-lines" viewBox="0 0 820 1520" aria-hidden="true"></svg>
                     <div class="skill-tree-nodes" id="skill-tree-nodes"></div>
                 </div>
             </div>

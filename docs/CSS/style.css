@@ -38,6 +38,46 @@ body{
 .prestige-view .prestige{
     margin-top:0;
 }
+.prestige-view{
+    position:fixed;
+    z-index:4;
+    top:72px;
+    left:50%;
+    width:min(920px, calc(100vw - 24px));
+    max-height:calc(100vh - 88px);
+    box-sizing:border-box;
+    margin:0;
+    padding:20px;
+    overflow:auto;
+    transform:translateX(-50%);
+    border:1px solid rgba(105,234,255,0.42);
+    border-radius:8px;
+    background:rgba(16,20,38,0.98);
+    box-shadow:0 16px 48px rgba(0,0,0,0.5);
+    text-align:center;
+}
+.prestige-view .prestige{
+    padding-top:0;
+    border-top:0;
+}
+.prestige-view[hidden]{
+    display:none;
+}
+.prestige-drag-handle{
+    margin:0 0 12px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(105,234,255,0.35);
+    cursor:grab;
+    touch-action:none;
+    user-select:none;
+}
+.prestige-drag-handle:active{
+    cursor:grabbing;
+}
+.prestige-drag-handle:focus-visible{
+    outline:2px solid #69eaff;
+    outline-offset:3px;
+}
 .stats{
     display:flex;
     justify-content:center;
@@ -195,6 +235,12 @@ body{
     gap:12px;
     text-align:left;
 }
+.upgrade-item{
+    display:flex;
+    min-width:0;
+    flex-direction:column;
+    gap:6px;
+}
 .upgrade-card{
     display:flex;
     min-height:128px;
@@ -209,6 +255,24 @@ body{
     text-align:left;
     cursor:pointer;
     transition:border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+.upgrade-auto-toggle{
+    display:flex;
+    min-height:32px;
+    align-items:center;
+    gap:8px;
+    padding:0 4px;
+    color:#c6d3e8;
+    font-size:13px;
+    cursor:pointer;
+}
+.upgrade-auto-toggle input{
+    width:16px;
+    height:16px;
+    accent-color:#69eaff;
+}
+.upgrade-auto-toggle input:disabled{
+    cursor:not-allowed;
 }
 .upgrade-card:hover:not(:disabled){
     transform:translateY(-2px);
