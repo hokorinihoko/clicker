@@ -117,7 +117,8 @@ function getEnergyCap(){
 };
 
 function getGlobalExponent(){
-	return 1+getSkillLevel("0")*0.01;
+	const challengeExponentBonus=getSkillLevel("6.2")>0?clearedChallenges.size*0.1:0;
+	return 1+getSkillLevel("0")*0.01+challengeExponentBonus;
 }
 
 function getGlobalMultiplier(){
@@ -130,6 +131,10 @@ function getGlobalMultiplier(){
 
 function getPrestigePointMultiplier(){
 	return 1+Number(getSkillLevel("2.1")>0)+Number(getSkillLevel("2.2")>0)+Number(getSkillLevel("2.3")>0)+Number(getSkillLevel("2.4")>0);
+}
+
+function getUpgradeCostMultiplier(){
+	return (getSkillLevel("1.6")>0?0.95:1)*(getSkillLevel("1.9")>0?0.99:1);
 }
 
 function skillCost(skill){
@@ -288,7 +293,7 @@ function isChallengeUnlocked(challengeId){
 
 function updateChallengeDisplays(){
 	const section=document.getElementById("challenge-section");
-	section.hidden=getSkillLevel("6.2")===0;
+	section.hidden=getSkillLevel("6.1")===0;
 	if(section.hidden){
 		return;
 	}
@@ -354,7 +359,7 @@ function updatePrestigeDisplays(){
 	button.textContent="転生する ("+window.Game.formatNumber(reward)+" pt)";
 	document.getElementById("prestige-reward").textContent="転生獲得: "+window.Game.formatNumber(reward)+" pt";
 	const autoBuyEnabledCount=window.Game.autoBuyEnabled.filter(Boolean).length;
-	document.getElementById("auto-buy-status").textContent=getSkillLevel("3.1")===0
+	document.getElementById("auto-buy-status").textContent=getSkillLevel("3.2")===0
 		? "自動購入: 未解放"
 		: autoBuyEnabledCount===0
 			? "自動購入: 対象なし"
@@ -385,6 +390,7 @@ function savePrestigeGame(){
 		pushMultiplier:game.pushMultiplier,
 		prestigeWindowPosition,
 		autoBuyEnabled:game.autoBuyEnabled,
+		autoBuyPriority:game.getAutoBuyPriority(),
 		skillIdVersion:2,
 		activeChallenge,
 		clearedChallenges:Array.from(clearedChallenges),
@@ -458,8 +464,11 @@ function loadPrestigeGame(){
 		if(Array.isArray(save.clearedChallenges)){
 			clearedChallenges=new Set(save.clearedChallenges.filter(id=>Number.isInteger(id)&&id>=1&&id<=challengeDefinitions.length));
 		}
-		if(Number.isInteger(save.activeChallenge)&&save.activeChallenge>=1&&save.activeChallenge<=challengeDefinitions.length&&getSkillLevel("6.2")>0){
+		if(Number.isInteger(save.activeChallenge)&&save.activeChallenge>=1&&save.activeChallenge<=challengeDefinitions.length&&getSkillLevel("6.1")>0){
 			activeChallenge=save.activeChallenge;
+		}
+		if(Array.isArray(save.autoBuyPriority)){
+			window.Game.setAutoBuyPriority(save.autoBuyPriority);
 		}
 
 		for(const key of ["clickBase","clickMultiplier","clickExponent","autoMultiplier","autoExponent","autoInterval"]){
@@ -490,12 +499,11 @@ function loadPrestigeGame(){
 function buyCheapestAvailableUpgrade(){
 	const game=window.Game;
 	while(game.energy<getEnergyCap()){
-		const next=game.upgrades
-			.map((upgrade,index)=>({upgrade,index}))
-			.filter(item=>game.getAutoBuyEnabled(item.index)&&!game.isUpgradeBlocked(item.index)&&game.energy>=game.getUpgradePrice(item.upgrade)&&(
-				item.upgrade.limit===undefined||item.upgrade.count<item.upgrade.limit
-			))
-			.sort((left,right)=>game.getUpgradePrice(left.upgrade)-game.getUpgradePrice(right.upgrade)||left.index-right.index)[0];
+		const next=game.getAutoBuyPriority()
+			.map(index=>({upgrade:game.upgrades[index],index}))
+			.find(item=>game.getAutoBuyEnabled(item.index)&&!game.isUpgradeBlocked(item.index)&&game.energy>=game.getUpgradePrice(item.upgrade)&&(
+				game.getUpgradeLimit(item.upgrade,item.index)===undefined||item.upgrade.count<game.getUpgradeLimit(item.upgrade,item.index)
+			));
 		if(!next||!game.buyUpgrade(next.index)){
 			break;
 		}
@@ -512,7 +520,7 @@ function purchaseSkill(skill){
 	}
 	prestigePoints-=cost;
 	skillLevels[skill.id]=getSkillLevel(skill.id)+1;
-	if(skill.id==="3.1"){
+	if(skill.id==="3.2"){
 		buyCheapestAvailableUpgrade();
 	}
 	updatePrestigeDisplays();
@@ -523,7 +531,7 @@ function purchaseSkill(skill){
 }
 
 function startChallenge(challengeId){
-	if(getSkillLevel("6.2")===0||!Number.isInteger(challengeId)){
+	if(getSkillLevel("6.1")===0||!Number.isInteger(challengeId)){
 		return;
 	}
 	if(activeChallenge===challengeId){
@@ -742,6 +750,7 @@ window.Prestige={
 	getGlobalMultiplier,
 	getSkillLevel,
 	getPrestigePointMultiplier,
+	getUpgradeCostMultiplier,
 	getPushMultiplierForEnergy,
 	getDeveloperValues,
 	setDeveloperValue,
@@ -775,7 +784,7 @@ window.Prestige={
 	updateDisplays:updatePrestigeDisplays,
 	saveGame:savePrestigeGame,
 	tryAutoBuy(){
-		if(getSkillLevel("3.1")>0){
+		if(getSkillLevel("3.2")>0){
 			buyCheapestAvailableUpgrade();
 		}
 	}

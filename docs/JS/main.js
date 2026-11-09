@@ -24,7 +24,10 @@ const upgrades=[
     {cost:1000,count:0,apply:()=>autoExponent+=(upgrades[6].count<exponentSoftCap?exponentGain:exponentGainAfterCap)}
 ];
 const autoBuyEnabled=upgrades.map(()=>true);
+let autoBuyPriority=upgrades.map((_,index)=>index);
+let purchaseAmount=1;
 const upgradeTabs=Array.from(document.querySelectorAll(".upgrade-tab"));
+const priorityControls=[];
 
 function activateUpgradeTab(tab){
     upgradeTabs.forEach(item=>{
@@ -66,10 +69,39 @@ function autoPower(){
     return Math.floor(normalPower**challenge.valueExponent*100)/100;
 }
 
-function getUpgradePrice(upgrade){
+function getUpgradePriceForCost(cost){
     const challenge=window.Prestige?window.Prestige.getChallengeModifiers():{priceExponent:1};
-    const price=upgrade.cost**challenge.priceExponent;
+    const discount=window.Prestige?window.Prestige.getUpgradeCostMultiplier():1;
+    const price=cost**challenge.priceExponent*discount;
     return Number.isFinite(price)?Math.ceil(price):Infinity;
+}
+
+function getUpgradePrice(upgrade){
+    return getUpgradePriceForCost(upgrade.cost);
+}
+
+function getUpgradeLimit(upgrade,index){
+    if(index!==4||upgrade.limit===undefined){
+        return upgrade.limit;
+    }
+    const prestige=window.Prestige;
+    return upgrade.limit+
+        Number(prestige&&prestige.getSkillLevel("1.5")>0)*10+
+        Number(prestige&&prestige.getSkillLevel("1.7")>0)*5+
+        Number(prestige&&prestige.getSkillLevel("1.8")>0)*5;
+}
+
+function getBulkUpgradeQuote(upgrade,index,quantity){
+    const limit=getUpgradeLimit(upgrade,index);
+    const remaining=limit===undefined?quantity:Math.max(0,limit-upgrade.count);
+    const purchaseCount=Math.min(quantity,remaining);
+    let cost=upgrade.cost;
+    let total=0;
+    for(let purchaseIndex=0;purchaseIndex<purchaseCount;purchaseIndex++){
+        total+=getUpgradePriceForCost(cost);
+        cost=Math.ceil(cost*1.1);
+    }
+    return {purchaseCount,total};
 }
 
 function isUpgradeBlocked(index){
@@ -81,21 +113,41 @@ function updateDisplays(){
     productionDisplay.textContent="AUTO: +"+formatNumber(autoPower())+" / "+formatNumber(autoInterval/1000)+"秒";
     upgrades.forEach((upgrade,index)=>{
         const card=document.querySelector('[data-upgrade="'+index+'"]');
+        const limit=getUpgradeLimit(upgrade,index);
         document.getElementById("count"+index).textContent=upgrade.limit
-            ? "購入: "+upgrade.count+" / "+upgrade.limit
+            ? "購入: "+upgrade.count+" / "+limit
             : "購入: "+upgrade.count;
-        document.getElementById("price"+index).textContent=formatNumber(getUpgradePrice(upgrade))+" Energy";
+        const unitPrice=getUpgradePrice(upgrade);
+        const bulkQuote=getBulkUpgradeQuote(upgrade,index,10);
+        document.getElementById("price"+index).textContent=bulkQuote.purchaseCount>0
+            ? "1回: "+formatNumber(unitPrice)+" / ×"+bulkQuote.purchaseCount+": "+formatNumber(bulkQuote.total)+" Energy"
+            : "1回: "+formatNumber(unitPrice)+" / 上限到達";
         if(index===2||index===6){
             const currentExponent=index===2?clickExponent:autoExponent;
             const nextGain=upgrade.count<exponentSoftCap-1?exponentGain:exponentGainAfterCap;
             document.getElementById("effect"+index).textContent="指数: "+currentExponent.toFixed(3)+" / 次回 +"+(nextGain===exponentGain?"0.005":"0.001");
         }
-        card.disabled=isUpgradeBlocked(index)||energy<getUpgradePrice(upgrade)||(upgrade.limit!==undefined&&upgrade.count>=upgrade.limit);
+        card.disabled=isUpgradeBlocked(index)||energy<getUpgradePrice(upgrade)||(limit!==undefined&&upgrade.count>=limit);
         const autoBuyToggle=document.querySelector('[data-auto-buy="'+index+'"]');
         if(autoBuyToggle){
             autoBuyToggle.checked=window.Game.getAutoBuyEnabled(index);
-            autoBuyToggle.disabled=!window.Prestige||window.Prestige.getSkillLevel("3.1")===0;
+            autoBuyToggle.disabled=!window.Prestige||window.Prestige.getSkillLevel("3.3")===0;
         }
+        const priorityControl=priorityControls[index];
+        if(priorityControl){
+            const priorityIndex=autoBuyPriority.indexOf(index);
+            priorityControl.container.hidden=!window.Prestige||window.Prestige.getSkillLevel("3.4")===0;
+            priorityControl.rank.textContent="優先 "+(priorityIndex+1);
+            priorityControl.up.disabled=priorityIndex===0;
+            priorityControl.down.disabled=priorityIndex===autoBuyPriority.length-1;
+        }
+    });
+    document.querySelectorAll("[data-purchase-amount]").forEach(button=>{
+        const amount=Number(button.dataset.purchaseAmount);
+        const unlocked=amount===1||Boolean(window.Prestige&&window.Prestige.getSkillLevel("3.1")>0);
+        button.disabled=!unlocked;
+        button.classList.toggle("is-selected",purchaseAmount===amount);
+        button.setAttribute("aria-pressed",String(purchaseAmount===amount));
     });
     if(window.Prestige){
         window.Prestige.updateDisplays();
@@ -105,25 +157,28 @@ function updateDisplays(){
     }
 }
 
-function buyUpgrade(index,free=false){
+function buyUpgrade(index,free=false,quantity=1){
     const upgrade=upgrades[index];
-    if(isUpgradeBlocked(index)){
-        return false;
+    const purchaseLimit=free?1:Math.max(1,Math.floor(quantity));
+    let purchased=0;
+    for(let purchaseIndex=0;purchaseIndex<purchaseLimit;purchaseIndex++){
+        const limit=getUpgradeLimit(upgrade,index);
+        if(isUpgradeBlocked(index)||(limit!==undefined&&upgrade.count>=limit)){
+            break;
+        }
+        const price=getUpgradePrice(upgrade);
+        if(!free&&energy<price){
+            break;
+        }
+        if(!free){
+            energy-=price;
+        }
+        upgrade.count++;
+        upgrade.apply();
+        upgrade.cost=Math.ceil(upgrade.cost*1.1);
+        purchased++;
     }
-    const price=getUpgradePrice(upgrade);
-    if(!free&&(energy<price||(upgrade.limit!==undefined&&upgrade.count>=upgrade.limit))){
-        return false;
-    }
-    if(free&&upgrade.limit!==undefined&&upgrade.count>=upgrade.limit){
-        return false;
-    }
-    if(!free){
-        energy-=price;
-    }
-    upgrade.count++;
-    upgrade.apply();
-    upgrade.cost=Math.ceil(upgrade.cost*1.1);
-    return true;
+    return purchased;
 }
 
 function addEnergy(amount){
@@ -177,9 +232,12 @@ for(const [index,tab] of upgradeTabs.entries()){
 document.querySelectorAll(".upgrade-card").forEach(card=>{
     card.addEventListener("click",function(){
         const index=Number(card.dataset.upgrade);
-        if(buyUpgrade(index)){
+        const purchased=buyUpgrade(index,false,purchaseAmount);
+        if(purchased>0){
             if(window.Achievements){
-                window.Achievements.recordUpgrade();
+                for(let purchaseIndex=0;purchaseIndex<purchased;purchaseIndex++){
+                    window.Achievements.recordUpgrade();
+                }
             }
             if(window.Prestige){
                 window.Prestige.tryAutoBuy();
@@ -190,12 +248,48 @@ document.querySelectorAll(".upgrade-card").forEach(card=>{
     });
 });
 
+document.querySelectorAll("[data-purchase-amount]").forEach(button=>{
+    button.addEventListener("click",()=>{
+        purchaseAmount=Number(button.dataset.purchaseAmount);
+        updateDisplays();
+    });
+});
+
 document.querySelectorAll("[data-auto-buy]").forEach(toggle=>{
     toggle.addEventListener("change",()=>{
         window.Game.setAutoBuyEnabled(Number(toggle.dataset.autoBuy),toggle.checked);
         updateDisplays();
         saveGame();
     });
+});
+
+document.querySelectorAll(".upgrade-item").forEach((item,index)=>{
+    const container=document.createElement("div");
+    container.className="auto-priority-controls";
+    const rank=document.createElement("span");
+    const up=document.createElement("button");
+    up.type="button";
+    up.textContent="↑";
+    up.title="自動購入の優先順位を上げる";
+    up.setAttribute("aria-label","アップグレード"+(index+1)+"の優先順位を上げる");
+    const down=document.createElement("button");
+    down.type="button";
+    down.textContent="↓";
+    down.title="自動購入の優先順位を下げる";
+    down.setAttribute("aria-label","アップグレード"+(index+1)+"の優先順位を下げる");
+    up.addEventListener("click",()=>{
+        window.Game.moveAutoBuyPriority(index,-1);
+        updateDisplays();
+        saveGame();
+    });
+    down.addEventListener("click",()=>{
+        window.Game.moveAutoBuyPriority(index,1);
+        updateDisplays();
+        saveGame();
+    });
+    container.append(rank,up,down);
+    item.appendChild(container);
+    priorityControls.push({container,rank,up,down});
 });
 
 core.addEventListener("click",function(){
@@ -235,6 +329,21 @@ window.Game={
             autoBuyEnabled[index]=Boolean(enabled);
         }
     },
+    getAutoBuyPriority(){return autoBuyPriority.slice();},
+    setAutoBuyPriority(priority){
+        if(Array.isArray(priority)&&priority.length===upgrades.length&&new Set(priority).size===upgrades.length&&priority.every(index=>Number.isInteger(index)&&index>=0&&index<upgrades.length)){
+            autoBuyPriority=priority.slice();
+        }
+    },
+    moveAutoBuyPriority(upgradeIndex,direction){
+        const currentIndex=autoBuyPriority.indexOf(upgradeIndex);
+        const targetIndex=currentIndex+direction;
+        if(currentIndex<0||targetIndex<0||targetIndex>=autoBuyPriority.length){
+            return;
+        }
+        [autoBuyPriority[currentIndex],autoBuyPriority[targetIndex]]=[autoBuyPriority[targetIndex],autoBuyPriority[currentIndex]];
+    },
+    getUpgradeLimit,
     get baseUpgradeCosts(){return [10,100,1000,100,1000,1000,1000];},
     getUpgradePrice,
     isUpgradeBlocked,

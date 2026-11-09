@@ -23,6 +23,10 @@
                 <button class="upgrade-tab" id="click-tab" type="button" role="tab" aria-selected="true" aria-controls="click-upgrades" tabindex="0">クリック</button>
                 <button class="upgrade-tab" id="auto-tab" type="button" role="tab" aria-selected="false" aria-controls="auto-upgrades" tabindex="-1">オート</button>
             </div>
+            <div class="purchase-amount" role="group" aria-label="一度に購入する数">
+                <button class="purchase-amount-option is-selected" type="button" data-purchase-amount="1" aria-pressed="true">×1</button>
+                <button class="purchase-amount-option" type="button" data-purchase-amount="10" aria-pressed="false" disabled>×10</button>
+            </div>
             <section class="upgrade-panel" id="click-upgrades" role="tabpanel" aria-labelledby="click-tab">
                 <div class="upgrade-grid">
                     <div class="upgrade-item">

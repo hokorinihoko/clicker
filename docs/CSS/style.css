@@ -229,6 +229,30 @@ body{
     margin-bottom:16px;
     border-bottom:1px solid rgba(105,234,255,0.35);
 }
+.purchase-amount{
+    display:flex;
+    justify-content:center;
+    gap:4px;
+    margin:0 0 14px;
+}
+.purchase-amount-option{
+    min-width:64px;
+    padding:7px 12px;
+    border:1px solid rgba(105,234,255,0.35);
+    border-radius:4px;
+    background:#18213a;
+    color:#c6d3e8;
+    font:inherit;
+    cursor:pointer;
+}
+.purchase-amount-option.is-selected{
+    border-color:#69eaff;
+    color:#69eaff;
+}
+.purchase-amount-option:disabled{
+    cursor:not-allowed;
+    opacity:0.5;
+}
 .upgrade-tab{
     min-width:120px;
     padding:10px 18px;
@@ -294,6 +318,31 @@ body{
 }
 .upgrade-auto-toggle input:disabled{
     cursor:not-allowed;
+}
+.auto-priority-controls{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:0 4px 4px;
+    color:#c6d3e8;
+    font-size:12px;
+}
+.auto-priority-controls[hidden]{
+    display:none;
+}
+.auto-priority-controls button{
+    min-width:30px;
+    min-height:28px;
+    border:1px solid rgba(105,234,255,0.35);
+    border-radius:4px;
+    background:#18213a;
+    color:#d5f8ff;
+    font:inherit;
+    cursor:pointer;
+}
+.auto-priority-controls button:disabled{
+    cursor:not-allowed;
+    opacity:0.45;
 }
 .upgrade-card:hover:not(:disabled){
     transform:translateY(-2px);
