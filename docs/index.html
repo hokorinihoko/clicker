@@ -9,6 +9,7 @@
 </head>
 <body>
     <button id="view-toggle" class="view-toggle" type="button" aria-controls="game-view prestige-view" aria-expanded="false" hidden>転生画面</button>
+    <button id="developer-toggle" class="developer-toggle" type="button" aria-controls="developer-panel" aria-expanded="false" hidden>開発者</button>
     <main id="game-view" class="game">
         <h1>ルミナスクリッカー</h1>
         <div class="stats" aria-live="polite">
@@ -97,6 +98,15 @@
             <p id="achievement-progress" aria-live="polite">解除済み: 0 / 0</p>
             <div class="achievement-grid" id="achievement-list"></div>
         </section>
+        <section class="gift-code" aria-labelledby="gift-code-title">
+            <h2 id="gift-code-title">ギフトコード</h2>
+            <form id="gift-code-form">
+                <label for="gift-code-input">コード</label>
+                <input id="gift-code-input" name="gift-code" type="text" autocomplete="off" spellcheck="false">
+                <button type="submit">使用</button>
+            </form>
+            <p id="gift-code-status" aria-live="polite"></p>
+        </section>
     </main>
     <main id="prestige-view" class="game prestige-view" hidden>
         <section class="prestige" aria-labelledby="prestige-title">
@@ -122,6 +132,21 @@
             </section>
         </section>
     </main>
+    <section id="developer-panel" class="developer-panel" aria-labelledby="developer-title" hidden>
+        <header class="developer-header">
+            <h2 id="developer-title">開発者モード</h2>
+            <button id="developer-close" type="button" aria-label="閉じる">閉じる</button>
+        </header>
+        <section aria-labelledby="developer-values-title">
+            <h3 id="developer-values-title">ゲーム数値</h3>
+            <div id="developer-values" class="developer-values"></div>
+        </section>
+        <section aria-labelledby="developer-achievements-title">
+            <h3 id="developer-achievements-title">実績</h3>
+            <div id="developer-achievements" class="developer-achievements"></div>
+        </section>
+        <button id="developer-reset" class="developer-reset" type="button">全データをリセット</button>
+    </section>
         <script src="JS/main.js"></script>
         <script src="JS/prestige.js"></script>
         <script src="JS/achievements.js"></script>

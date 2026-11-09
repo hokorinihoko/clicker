@@ -1,32 +1,53 @@
 let prestigePoints=0;
 let prestigeCount=0;
 let prestigeUnlocked=false;
+let developerMode=false;
 
 const prestigeSaveKey="luminousClickerPrestigeSave";
+const developerGiftCode="hokorinohoko";
 const prestigeEnergyRequirement=1e10;
 const viewToggle=document.getElementById("view-toggle");
 const prestigeView=document.getElementById("prestige-view");
+const developerToggle=document.getElementById("developer-toggle");
+const developerPanel=document.getElementById("developer-panel");
 let prestigeWindowPosition=null;
-const skillTreeOffsetY=120;
+const pendingSkillClicks=new Map();
+const skillTreeOffsetY=200;
+const mx=[
+	-145,-139,0,139,145
+];
+const my=[
+	-126,-80,0,80,126,
+];
 const skillDefinitions=[
-	{id:"0",name:"0",description:"全獲得量の指数 +0.01",cost:1,maxLevel:100,x:410,y:440},
+	{id:"0",name:"0",description:"全獲得量の指数 +0.01",cost:1,maxLevel:10,x:410,y:440},
 	{id:"1.1",name:"1.1",description:"全獲得量 +1倍",cost:1,requires:"0",x:410,y:215},
-	{id:"2.1",name:"2.1",description:"転生ポイント獲得数 +1",cost:2,requires:"0",x:605,y:327},
-	{id:"3.1",name:"3.1",description:"最安アップグレードを自動購入",cost:5,requires:"0",x:605,y:552},
+	{id:"2.1",name:"2.1",description:"転生ポイント獲得数 +1倍",cost:2,requires:"0",x:605,y:327},
+	{id:"3.1",name:"3.1",description:"x10購入解禁",cost:2,requires:"0",x:605,y:552},
 	{id:"4.1",name:"4.1",description:"Energy上限を 1e11 に拡張",cost:10,requires:"0",x:410,y:665},
 	{id:"5.1",name:"5.1",description:"転生後、CPを+10購入済みで開始",cost:10,requires:"0",x:215,y:552},
 	{id:"6.1",name:"6.1",description:"チャレンジ解放",cost:50,requires:"0",x:215,y:327},
-	{id:"1.2",name:"1.2",description:"全獲得量 +1倍",cost:2,requires:"1.1",x:337,y:89},
-	{id:"1.3",name:"1.3",description:"全獲得量 +3倍",cost:5,requires:"1.1",x:483,y:89},
-	{id:"1.4",name:"1.4",description:"全獲得量 +3倍",cost:10,requires:"1.2,1.3",x:410,y:-37},
-	{id:"2.2",name:"2.2",description:"転生ポイント獲得数 +1",cost:3,requires:"2.1",x:744,y:247},
-	{id:"4.2",name:"4.2",description:"Energy上限を 1e12 に拡張",cost:50,requires:"4.1",x:410,y:810},
-	{id:"4.3",name:"4.3",description:"Energy上限を 1e13 に拡張",cost:1000,requires:"4.2",x:410,y:955},
-	{id:"4.4",name:"4.4",description:"Energy上限を 1e14 に拡張",cost:50000,requires:"4.3",x:410,y:1100},
-	{id:"4.5",name:"4.5",description:"Energy上限を 1e15 に拡張",cost:100000,requires:"4.4",x:410,y:1245},
-	{id:"5.2",name:"5.2",description:"転生後、CPをさらに+10購入済み",cost:10,requires:"5.1",x:143,y:678},
-	{id:"5.3",name:"5.3",description:"転生後、クリック倍率を+10購入済み",cost:15,requires:"5.1",x:70,y:552},
-	{id:"6.2",name:"6.2",description:"チャレンジ1つクリアにつき+^0.1",cost:500,requires:"6.1",x:76,y:247}
+	{id:"1.2",name:"1.2",description:"全獲得量 +1倍",cost:2,requires:"1.1",x:410+mx[0],y:215+my[1]},
+	{id:"1.3",name:"1.3",description:"全獲得量 +3倍",cost:5,requires:"1.1",x:410+mx[4],y:215+my[1]},
+	{id:"1.4",name:"1.4",description:"全獲得量 +3倍",cost:10,requires:"1.2,1.3",x:410,y:215+my[0]},
+	{id:"1.5",name:"1.5",description:"オード時間短縮の最大購入数+10",cost:5,requires:"1.3",x:410+mx[4]*2,y:215+my[1]*2},
+	{id:"1.6",name:"1.6",description:"全アップグレード値段5%引き",cost:10,requires:"1.2",x:410+mx[0]*2,y:215+my[1]*2},
+	{id:"1.7",name:"1.7",description:"オード時間短縮の最大購入数+5",cost:15,requires:"1.6",x:410+mx[4]*3,y:215+my[1]*3},
+	{id:"1.8",name:"1.8",description:"オード時間短縮の最大購入数+5",cost:45,requires:"1.7",x:410+mx[4]*3,y:215+my[0]+my[1]*3},
+	{id:"1.9",name:"1.9",description:"全アップグレード値段1%引き",cost:20,requires:"1.5",x:410+mx[0]*3,y:215+my[1]*3},
+	{id:"2.2",name:"2.2",description:"転生ポイント獲得数 +1倍",cost:3,requires:"2.1",x:605+mx[3],y:327+my[1]},
+	{id:"2.3",name:"2.3",description:"転生ポイント獲得数 +1倍",cost:10,requires:"2.2",x:605+mx[3]*2,y:327+my[1]*2},
+	{id:"2.4",name:"2.4",description:"転生ポイント獲得数 +1倍",cost:50,requires:"2.3",x:605+mx[3]*3,y:327+my[1]*3},
+	{id:"3.2",name:"3.2",description:"最安アップグレードを自動購入",cost:10,requires:"3.1",x:605+mx[3],y:552+my[3]},
+	{id:"3.3",name:"3.3",description:"自動購入をON/OFF可能にする",cost:20,requires:"3.2",x:605+mx[3]*2,y:552+my[3]*2},
+	{id:"3.4",name:"3.4",description:"優先順位を変更可能にする",cost:20,requires:"3.3",x:605+mx[3]*3,y:552+my[3]*3},
+	{id:"4.2",name:"4.2",description:"Energy上限を 1e12 に拡張",cost:50,requires:"4.1",x:410,y:665+my[4]},
+	{id:"4.3",name:"4.3",description:"Energy上限を 1e13 に拡張",cost:1000,requires:"4.2",x:410,y:665+my[4]*2},
+	{id:"4.4",name:"4.4",description:"Energy上限を 1e14 に拡張",cost:50000,requires:"4.3",x:410,y:665+my[4]*3},
+	{id:"4.5",name:"4.5",description:"Energy上限を 1e15 に拡張",cost:100000,requires:"4.4",x:410,y:665+my[4]*4},
+	{id:"5.2",name:"5.2",description:"転生後、CPをさらに+10購入済み",cost:10,requires:"5.1",x:215,y:552+my[4]},
+	{id:"5.3",name:"5.3",description:"転生後、クリック倍率を+10購入済み",cost:15,requires:"5.1",x:215+mx[0],y:552},
+	{id:"6.2",name:"6.2",description:"チャレンジ1つクリアにつき+^0.1",cost:500,requires:"6.1",x:215+mx[0],y:327+my[1]}
 ];
 skillDefinitions.forEach(skill=>{
 	if(skill.maxLevel===undefined){
@@ -37,8 +58,10 @@ skillDefinitions.forEach(skill=>{
 const skillLevels=Object.fromEntries(skillDefinitions.map(skill=>[skill.id,0]));
 const skillEdges=[
 	["0","1.1"],["0","2.1"],["0","3.1"],["0","4.1"],["0","5.1"],["0","6.1"],
-	["1.1","1.2"],["1.1","1.3"],["1.2","1.4"],["1.3","1.4"],
+	["1.1","1.2"],["1.1","1.3"],["1.2","1.4"],["1.3","1.4"],["1.3","1.5"],
+	["1.2","1.6"],["1.5","1.7"],["1.7","1.8"],["1.6","1.9"],
 	["2.1","2.2"],
+	["3.1","3.2"],["3.2","3.3"],["3.3","3.4"],
 	["4.1","4.2"],["4.2","4.3"],["4.3","4.4"],["4.4","4.5"],
 	["5.1","5.2"],["5.1","5.3"],
 	["6.1","6.2"]
@@ -102,7 +125,7 @@ function getGlobalMultiplier(){
 }
 
 function getPrestigePointMultiplier(){
-	return 1+Number(getSkillLevel("2.1")>0)+Number(getSkillLevel("2.2")>0);
+	return 1+Number(getSkillLevel("2.1")>0)+Number(getSkillLevel("2.2")>0)+Number(getSkillLevel("2.3")>0)+Number(getSkillLevel("2.4")>0);
 }
 
 function skillCost(skill){
@@ -141,7 +164,18 @@ function createSkillTree(){
 		cost.className="skill-node-cost";
 
 		button.append(name,description,cost);
-		button.addEventListener("click",()=>purchaseSkill(skill));
+		button.addEventListener("click",event=>{
+			if(developerMode){
+				adjustSkillLevelFromClick(skill,event);
+				return;
+			}
+			purchaseSkill(skill);
+		});
+		button.addEventListener("dblclick",event=>{
+			if(developerMode){
+				event.preventDefault();
+			}
+		});
 		container.appendChild(button);
 		skillButtons.set(skill.id,{button,cost});
 	}
@@ -177,7 +211,7 @@ function updateSkillTree(){
 		button.classList.toggle("purchased",level>0);
 		button.classList.toggle("available",prerequisiteMet&&!skill.development&&!isMaxed);
 		button.classList.toggle("dev",Boolean(skill.development));
-		button.disabled=Boolean(skill.development)||!prerequisiteMet||isMaxed||prestigePoints<cost;
+		button.disabled=!developerMode&&(Boolean(skill.development)||!prerequisiteMet||isMaxed||prestigePoints<cost);
 
 		if(skill.development){
 			costLabel.textContent=window.Game.formatNumber(skill.cost)+" pt ・開発中";
@@ -193,6 +227,31 @@ function updateSkillTree(){
 	for(const line of document.querySelectorAll(".skill-tree-lines line")){
 		line.classList.toggle("active",getSkillLevel(line.dataset.child)>0);
 	}
+}
+
+function adjustSkillLevel(skill,amount){
+	skillLevels[skill.id]=Math.max(0,Math.min(skill.maxLevel,getSkillLevel(skill.id)+amount));
+	updatePrestigeDisplays();
+	savePrestigeGame();
+}
+
+function adjustSkillLevelFromClick(skill,event){
+	const pendingClick=pendingSkillClicks.get(skill.id);
+	if(event.detail===0){
+		adjustSkillLevel(skill,1);
+		return;
+	}
+	if(pendingClick){
+		clearTimeout(pendingClick);
+		pendingSkillClicks.delete(skill.id);
+		adjustSkillLevel(skill,-1);
+		return;
+	}
+	const timer=setTimeout(()=>{
+		pendingSkillClicks.delete(skill.id);
+		adjustSkillLevel(skill,1);
+	},250);
+	pendingSkillClicks.set(skill.id,timer);
 }
 
 function createChallengeCards(){
@@ -225,7 +284,7 @@ function isChallengeUnlocked(challengeId){
 
 function updateChallengeDisplays(){
 	const section=document.getElementById("challenge-section");
-	section.hidden=getSkillLevel("6.1")===0;
+	section.hidden=getSkillLevel("6.2")===0;
 	if(section.hidden){
 		return;
 	}
@@ -268,6 +327,7 @@ function updatePrestigeDisplays(){
 		prestigeUnlocked=true;
 	}
 	viewToggle.hidden=!prestigeUnlocked;
+	developerToggle.hidden=!developerMode;
 	document.getElementById("prestige-points").textContent="転生ポイント: "+window.Game.formatNumber(prestigePoints)+" (転生 "+window.Game.formatNumber(prestigeCount)+"回)";
 	document.getElementById("energy-cap").textContent="Energy上限: "+window.Game.formatNumber(energyCap);
 
@@ -301,6 +361,7 @@ function savePrestigeGame(){
 		prestigePoints,
 		prestigeCount,
 		prestigeUnlocked,
+		developerMode,
 		prestigeWindowPosition,
 		autoBuyEnabled:game.autoBuyEnabled,
 		skillIdVersion:2,
@@ -332,6 +393,7 @@ function loadPrestigeGame(){
 			}
 		}
 		prestigeUnlocked=save.prestigeUnlocked===true||prestigeCount>0;
+		developerMode=save.developerMode===true;
 		if(save.prestigeWindowPosition&&Number.isFinite(save.prestigeWindowPosition.left)&&Number.isFinite(save.prestigeWindowPosition.top)){
 			prestigeWindowPosition={left:save.prestigeWindowPosition.left,top:save.prestigeWindowPosition.top};
 		}
@@ -369,7 +431,7 @@ function loadPrestigeGame(){
 		if(Array.isArray(save.clearedChallenges)){
 			clearedChallenges=new Set(save.clearedChallenges.filter(id=>Number.isInteger(id)&&id>=1&&id<=challengeDefinitions.length));
 		}
-		if(Number.isInteger(save.activeChallenge)&&save.activeChallenge>=1&&save.activeChallenge<=challengeDefinitions.length&&getSkillLevel("6.1")>0){
+		if(Number.isInteger(save.activeChallenge)&&save.activeChallenge>=1&&save.activeChallenge<=challengeDefinitions.length&&getSkillLevel("6.2")>0){
 			activeChallenge=save.activeChallenge;
 		}
 
@@ -434,7 +496,7 @@ function purchaseSkill(skill){
 }
 
 function startChallenge(challengeId){
-	if(getSkillLevel("6.1")===0||!Number.isInteger(challengeId)){
+	if(getSkillLevel("6.2")===0||!Number.isInteger(challengeId)){
 		return;
 	}
 	if(activeChallenge===challengeId){
@@ -494,12 +556,137 @@ function prestige(){
 	}
 }
 
+const developerValueDefinitions=[
+	{key:"energy",label:"Energy"},
+	{key:"prestigePoints",label:"転生ポイント"},
+	{key:"prestigeCount",label:"転生回数"},
+	{key:"clickBase",label:"クリック基本値"},
+	{key:"clickMultiplier",label:"クリック倍率"},
+	{key:"clickExponent",label:"クリック指数"},
+	{key:"autoBase",label:"オート基本値"},
+	{key:"autoMultiplier",label:"オート倍率"},
+	{key:"autoExponent",label:"オート指数"},
+	{key:"autoInterval",label:"オート間隔 (ms)"}
+];
+
+function getDeveloperValues(){
+	const game=window.Game;
+	return {
+		energy:game.energy,
+		prestigePoints,
+		prestigeCount,
+		clickBase:game.clickBase,
+		clickMultiplier:game.clickMultiplier,
+		clickExponent:game.clickExponent,
+		autoBase:game.autoBase,
+		autoMultiplier:game.autoMultiplier,
+		autoExponent:game.autoExponent,
+		autoInterval:game.autoInterval
+	};
+}
+
+function setDeveloperValue(key,value){
+	if(!Number.isFinite(value)){
+		return;
+	}
+	const game=window.Game;
+	const nonNegative=Math.max(0,value);
+	switch(key){
+		case "energy": game.energy=Math.min(nonNegative,getEnergyCap()); break;
+		case "prestigePoints": prestigePoints=nonNegative; break;
+		case "prestigeCount": prestigeCount=Math.floor(nonNegative); break;
+		case "clickBase": game.clickBase=nonNegative; break;
+		case "clickMultiplier": game.clickMultiplier=nonNegative; break;
+		case "clickExponent": game.clickExponent=nonNegative; break;
+		case "autoBase": game.autoBase=nonNegative; break;
+		case "autoMultiplier": game.autoMultiplier=nonNegative; break;
+		case "autoExponent": game.autoExponent=nonNegative; break;
+		case "autoInterval": game.autoInterval=Math.max(100,nonNegative); break;
+		default: return;
+	}
+	game.updateDisplays();
+	savePrestigeGame();
+}
+
+function renderDeveloperPanel(){
+	const values=getDeveloperValues();
+	const valuesContainer=document.getElementById("developer-values");
+	valuesContainer.replaceChildren();
+	for(const definition of developerValueDefinitions){
+		const row=document.createElement("div");
+		row.className="developer-value-row";
+		const label=document.createElement("span");
+		label.className="developer-value-label";
+		label.textContent=definition.label;
+		const value=document.createElement("output");
+		value.textContent=window.Game.formatNumber(values[definition.key]);
+		const actions=document.createElement("div");
+		actions.className="developer-value-actions";
+		for(const [operation,text] of [["add","+1"],["subtract","-1"],["multiply","×10"],["divide","÷10"]]){
+			const button=document.createElement("button");
+			button.type="button";
+			button.textContent=text;
+			button.setAttribute("aria-label",definition.label+"を"+text);
+			button.addEventListener("click",()=>{
+				const current=getDeveloperValues()[definition.key];
+				const next=operation==="add"?current+1
+					:operation==="subtract"?current-1
+					:operation==="multiply"?current*10
+					:current/10;
+				setDeveloperValue(definition.key,next);
+				renderDeveloperPanel();
+			});
+			actions.appendChild(button);
+		}
+		row.append(label,value,actions);
+		valuesContainer.appendChild(row);
+	}
+
+	const achievementContainer=document.getElementById("developer-achievements");
+	achievementContainer.replaceChildren();
+	for(const achievement of window.Achievements.getAchievements()){
+		const button=document.createElement("button");
+		button.type="button";
+		button.className="developer-achievement"+(achievement.unlocked?" is-enabled":"");
+		button.dataset.achievementId=achievement.id;
+		button.setAttribute("aria-pressed",String(achievement.unlocked));
+		button.textContent=achievement.name+" · "+(achievement.unlocked?"ON":"OFF");
+		button.addEventListener("click",()=>{
+			window.Achievements.setAchievementUnlocked(achievement.id,!achievement.unlocked);
+			renderDeveloperPanel();
+		});
+		achievementContainer.appendChild(button);
+	}
+}
+
+function resetAllGameData(){
+	if(!window.confirm("ゲームの全データをリセットします。実績・転生・開発者モードも消去されます。よろしいですか？")){
+		return;
+	}
+	window.removeEventListener("beforeunload",savePrestigeGame);
+	localStorage.removeItem(prestigeSaveKey);
+	localStorage.removeItem("luminousClickerAchievements");
+	window.location.reload();
+}
+
 window.Prestige={
 	getEnergyCap,
 	getGlobalExponent,
 	getGlobalMultiplier,
 	getSkillLevel,
 	getPrestigePointMultiplier,
+	getDeveloperValues,
+	setDeveloperValue,
+	setDeveloperMode(enabled){
+		developerMode=Boolean(enabled);
+		developerToggle.hidden=!developerMode;
+		if(!developerMode){
+			developerPanel.hidden=true;
+			developerToggle.setAttribute("aria-expanded","false");
+		}
+		updatePrestigeDisplays();
+		savePrestigeGame();
+	},
 	getChallengeModifiers(){
 		const challenge=challengeDefinitions.find(item=>item.id===activeChallenge);
 		return challenge?{
@@ -582,6 +769,30 @@ viewToggle.addEventListener("click",()=>{
 		savePrestigeGame();
 	}
 });
+document.getElementById("gift-code-form").addEventListener("submit",event=>{
+	event.preventDefault();
+	const input=document.getElementById("gift-code-input");
+	if(input.value.trim().toLowerCase()!==developerGiftCode){
+		document.getElementById("gift-code-status").textContent="コードが違います。";
+		return;
+	}
+	window.Prestige.setDeveloperMode(true);
+	document.getElementById("gift-code-status").textContent="開発者モードを解放しました。";
+	input.value="";
+});
+developerToggle.addEventListener("click",()=>{
+	const opening=developerPanel.hidden;
+	if(opening){
+		renderDeveloperPanel();
+	}
+	developerPanel.hidden=!opening;
+	developerToggle.setAttribute("aria-expanded",String(opening));
+});
+document.getElementById("developer-close").addEventListener("click",()=>{
+	developerPanel.hidden=true;
+	developerToggle.setAttribute("aria-expanded","false");
+});
+document.getElementById("developer-reset").addEventListener("click",resetAllGameData);
 window.addEventListener("beforeunload",savePrestigeGame);
 loadPrestigeGame();
 createSkillTree();

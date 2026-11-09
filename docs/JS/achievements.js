@@ -10,6 +10,7 @@ const achievementStats={
 };
 const unlockedAchievements=new Set();
 const clearedChallengeAchievements=new Set();
+const manualAchievementStates=new Map();
 const achievementDefinitions=[
     {id:"click-1",name:"起動",description:"初めてCOREをクリックする",goal:1,progress:()=>achievementStats.clicks},
     {id:"click-2",name:"連打の始まり",description:"COREを10回クリックする",goal:10,progress:()=>achievementStats.clicks},
@@ -78,7 +79,8 @@ function saveAchievements(){
         localStorage.setItem(achievementSaveKey,JSON.stringify({
             stats:achievementStats,
             unlocked:Array.from(unlockedAchievements),
-            clearedChallenges:Array.from(clearedChallengeAchievements)
+            clearedChallenges:Array.from(clearedChallengeAchievements),
+            manualStates:Object.fromEntries(manualAchievementStates)
         }));
     }catch(error){
         console.warn("実績を保存できませんでした",error);
@@ -106,6 +108,13 @@ function loadAchievements(){
                 }
             }
         }
+        if(save.manualStates&&typeof save.manualStates==="object"){
+            for(const [id,unlocked] of Object.entries(save.manualStates)){
+                if(achievementDefinitions.some(achievement=>achievement.id===id)&&typeof unlocked==="boolean"){
+                    manualAchievementStates.set(id,unlocked);
+                }
+            }
+        }
         if(Array.isArray(save.clearedChallenges)){
             for(const challengeId of save.clearedChallenges){
                 if(Number.isInteger(challengeId)&&challengeId>=1&&challengeId<=10){
@@ -123,7 +132,13 @@ function updateAchievements(){
     const list=document.getElementById("achievement-list");
     let newlyUnlocked=false;
     for(const achievement of achievementDefinitions){
-        if(!unlockedAchievements.has(achievement.id)&&achievement.progress()>=achievement.goal){
+        if(manualAchievementStates.has(achievement.id)){
+            if(manualAchievementStates.get(achievement.id)){
+                unlockedAchievements.add(achievement.id);
+            }else{
+                unlockedAchievements.delete(achievement.id);
+            }
+        }else if(!unlockedAchievements.has(achievement.id)&&achievement.progress()>=achievement.goal){
             unlockedAchievements.add(achievement.id);
             newlyUnlocked=true;
         }
@@ -154,6 +169,23 @@ function updateAchievements(){
     if(newlyUnlocked){
         saveAchievements();
     }
+}
+
+function getAchievements(){
+    return achievementDefinitions.map(achievement=>({
+        id:achievement.id,
+        name:achievement.name,
+        unlocked:unlockedAchievements.has(achievement.id)
+    }));
+}
+
+function setAchievementUnlocked(id,unlocked){
+    if(!achievementDefinitions.some(achievement=>achievement.id===id)){
+        return;
+    }
+    manualAchievementStates.set(id,Boolean(unlocked));
+    updateAchievements();
+    saveAchievements();
 }
 
 function recordClick(){
@@ -199,6 +231,8 @@ function recordChallengeClear(challengeId){
 
 window.Achievements={
     refresh:updateAchievements,
+    getAchievements,
+    setAchievementUnlocked,
     recordClick,
     recordEnergy,
     recordUpgrade,
