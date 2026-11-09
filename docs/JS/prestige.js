@@ -2,10 +2,14 @@ let prestigePoints=0;
 let prestigeCount=0;
 let prestigeUnlocked=false;
 let developerMode=false;
+let pushCount=0;
+let pushUnlocked=false;
+let lastPushEnergy=0;
 
 const prestigeSaveKey="luminousClickerPrestigeSave";
 const developerGiftCode="hokorinohoko";
 const prestigeEnergyRequirement=1e10;
+const pushEnergyRequirement=1e5;
 const viewToggle=document.getElementById("view-toggle");
 const prestigeView=document.getElementById("prestige-view");
 const developerToggle=document.getElementById("developer-toggle");
@@ -323,6 +327,19 @@ function updatePrestigeDisplays(){
 	const game=window.Game;
 	const energyCap=getEnergyCap();
 	game.energy=Math.min(game.energy,energyCap);
+	if(game.energy>=pushEnergyRequirement){
+		pushUnlocked=true;
+	}
+	const pushButton=document.getElementById("push-button");
+	pushButton.hidden=!pushUnlocked;
+	const canPush=game.energy>=pushEnergyRequirement&&game.energy>lastPushEnergy;
+	pushButton.disabled=!canPush;
+	pushButton.textContent=canPush?"Pushする":lastPushEnergy>=pushEnergyRequirement
+		? "前回PushのEnergy超過で実行可能"
+		: "Pushする (Energy 1e5で実行可能)";
+	document.getElementById("push-status").textContent=pushUnlocked
+		? "現在のPush倍率: x"+window.Game.formatNumber(game.pushMultiplier)+" ・Push回数: "+window.Game.formatNumber(pushCount)+" ・前回Push時Energy: "+window.Game.formatNumber(lastPushEnergy)
+		: "Energy 1e5でPushが解放されます。";
 	if(game.energy>=1e10||prestigeCount>0){
 		prestigeUnlocked=true;
 	}
@@ -362,6 +379,10 @@ function savePrestigeGame(){
 		prestigeCount,
 		prestigeUnlocked,
 		developerMode,
+		pushCount,
+		pushUnlocked,
+		lastPushEnergy,
+		pushMultiplier:game.pushMultiplier,
 		prestigeWindowPosition,
 		autoBuyEnabled:game.autoBuyEnabled,
 		skillIdVersion:2,
@@ -394,6 +415,12 @@ function loadPrestigeGame(){
 		}
 		prestigeUnlocked=save.prestigeUnlocked===true||prestigeCount>0;
 		developerMode=save.developerMode===true;
+		pushCount=Number.isInteger(save.pushCount)&&save.pushCount>=0?save.pushCount:0;
+		pushUnlocked=save.pushUnlocked===true||pushCount>0;
+		lastPushEnergy=Number.isFinite(save.lastPushEnergy)&&save.lastPushEnergy>=0?save.lastPushEnergy:0;
+		if(Number.isFinite(save.pushMultiplier)&&save.pushMultiplier>=1){
+			window.Game.pushMultiplier=save.pushMultiplier;
+		}
 		if(save.prestigeWindowPosition&&Number.isFinite(save.prestigeWindowPosition.left)&&Number.isFinite(save.prestigeWindowPosition.top)){
 			prestigeWindowPosition={left:save.prestigeWindowPosition.left,top:save.prestigeWindowPosition.top};
 		}
@@ -536,6 +563,10 @@ function prestige(){
 		clearedChallenges.add(completedChallenge);
 		activeChallenge=null;
 	}
+	game.pushMultiplier=1;
+	pushCount=0;
+	pushUnlocked=false;
+	lastPushEnergy=0;
 	game.resetRun();
 	const freeClickBuys=10*Number(getSkillLevel("5.1")>0)+10*Number(getSkillLevel("5.2")>0);
 	for(let index=0;index<freeClickBuys;index++){
@@ -556,6 +587,33 @@ function prestige(){
 	}
 }
 
+function getPushMultiplierForEnergy(energy){
+	if(!Number.isFinite(energy)||energy<pushEnergyRequirement){
+		return 1;
+	}
+	return 10**(0.19*(Math.log10(energy)-4)**2);
+}
+
+function push(){
+	const game=window.Game;
+	if(game.energy<pushEnergyRequirement||game.energy<=lastPushEnergy){
+		return;
+	}
+	const multiplierGained=getPushMultiplierForEnergy(game.energy);
+	const energyAtPush=game.energy;
+	const confirmation="Pushしますか？\nEnergyとアップグレードをリセットします。\nPush倍率は x"+window.Game.formatNumber(multiplierGained)+" に置き換わります。";
+	if(!window.confirm(confirmation)){
+		return;
+	}
+	game.pushMultiplier=multiplierGained;
+	pushCount++;
+	pushUnlocked=true;
+	lastPushEnergy=energyAtPush;
+	game.resetRun();
+	game.updateDisplays();
+	savePrestigeGame();
+}
+
 const developerValueDefinitions=[
 	{key:"energy",label:"Energy"},
 	{key:"prestigePoints",label:"転生ポイント"},
@@ -566,7 +624,10 @@ const developerValueDefinitions=[
 	{key:"autoBase",label:"オート基本値"},
 	{key:"autoMultiplier",label:"オート倍率"},
 	{key:"autoExponent",label:"オート指数"},
-	{key:"autoInterval",label:"オート間隔 (ms)"}
+	{key:"autoInterval",label:"オート間隔 (ms)"},
+	{key:"pushMultiplier",label:"Push倍率"},
+	{key:"pushCount",label:"Push回数"},
+	{key:"lastPushEnergy",label:"前回Push時Energy"}
 ];
 
 function getDeveloperValues(){
@@ -581,7 +642,10 @@ function getDeveloperValues(){
 		autoBase:game.autoBase,
 		autoMultiplier:game.autoMultiplier,
 		autoExponent:game.autoExponent,
-		autoInterval:game.autoInterval
+		autoInterval:game.autoInterval,
+		pushMultiplier:game.pushMultiplier,
+		pushCount,
+		lastPushEnergy
 	};
 }
 
@@ -602,6 +666,9 @@ function setDeveloperValue(key,value){
 		case "autoMultiplier": game.autoMultiplier=nonNegative; break;
 		case "autoExponent": game.autoExponent=nonNegative; break;
 		case "autoInterval": game.autoInterval=Math.max(100,nonNegative); break;
+		case "pushMultiplier": game.pushMultiplier=Math.max(1,nonNegative); break;
+		case "pushCount": pushCount=Math.floor(nonNegative); break;
+		case "lastPushEnergy": lastPushEnergy=nonNegative; break;
 		default: return;
 	}
 	game.updateDisplays();
@@ -675,6 +742,7 @@ window.Prestige={
 	getGlobalMultiplier,
 	getSkillLevel,
 	getPrestigePointMultiplier,
+	getPushMultiplierForEnergy,
 	getDeveloperValues,
 	setDeveloperValue,
 	setDeveloperMode(enabled){
@@ -759,6 +827,7 @@ window.addEventListener("resize",()=>{
 });
 
 document.getElementById("prestige-button").addEventListener("click",prestige);
+document.getElementById("push-button").addEventListener("click",push);
 viewToggle.addEventListener("click",()=>{
 	const showingPrestige=!prestigeView.hidden;
 	prestigeView.hidden=showingPrestige;

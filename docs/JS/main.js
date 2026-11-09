@@ -6,11 +6,12 @@ let autoBase=1;
 let autoMultiplier=1;
 let autoExponent=1;
 let autoInterval=10000;
+let pushMultiplier=1;
 
 const core=document.getElementById("core");
 const energyDisplay=document.getElementById("energy");
 const productionDisplay=document.getElementById("Production");
-const exponentSoftCap=100;
+const exponentSoftCap=200;
 const exponentGain=0.005;
 const exponentGainAfterCap=0.001;
 const upgrades=[
@@ -49,7 +50,7 @@ function clickPower(){
     const exponent=window.Prestige?window.Prestige.getGlobalExponent():1;
     const multiplier=window.Prestige?window.Prestige.getGlobalMultiplier():1;
     const challenge=window.Prestige?window.Prestige.getChallengeModifiers():{valueExponent:1};
-    const normalPower=rawPower**exponent*multiplier;
+    const normalPower=rawPower**exponent*multiplier*pushMultiplier;
     return Math.floor(normalPower**challenge.valueExponent*100)/100;
 }
 
@@ -61,7 +62,7 @@ function autoPower(){
     const rawPower=(autoBase*autoMultiplier)**autoExponent;
     const exponent=window.Prestige?window.Prestige.getGlobalExponent():1;
     const multiplier=window.Prestige?window.Prestige.getGlobalMultiplier():1;
-    const normalPower=rawPower**exponent*multiplier;
+    const normalPower=rawPower**exponent*multiplier*pushMultiplier;
     return Math.floor(normalPower**challenge.valueExponent*100)/100;
 }
 
@@ -224,6 +225,8 @@ window.Game={
     set autoExponent(value){autoExponent=value;},
     get autoInterval(){return autoInterval;},
     set autoInterval(value){autoInterval=value;},
+    get pushMultiplier(){return pushMultiplier;},
+    set pushMultiplier(value){pushMultiplier=Number.isFinite(value)?Math.max(1,value):Number.MAX_VALUE;},
     get upgrades(){return upgrades;},
     get autoBuyEnabled(){return autoBuyEnabled.slice();},
     getAutoBuyEnabled(index){return autoBuyEnabled[index]===true;},

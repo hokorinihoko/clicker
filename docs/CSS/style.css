@@ -492,6 +492,26 @@ body{
 #prestige-button:hover{
     background:#704e27;
 }
+#push-button{
+    padding:12px 24px;
+    border:1px solid #78dfc3;
+    border-radius:5px;
+    background:#20463e;
+    color:#ccfff1;
+    font:inherit;
+    font-weight:700;
+    cursor:pointer;
+}
+#push-button:hover:not(:disabled){
+    background:#2b6154;
+}
+#push-button:disabled{
+    cursor:not-allowed;
+    opacity:0.55;
+}
+#push-button[hidden]{
+    display:none;
+}
 #prestige-button[hidden]{
     display:none;
 }
